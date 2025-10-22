@@ -78,6 +78,7 @@ export default {
         ctx.value.fillStyle = "#aaa";
         ctx.value.font = `${Math.floor(cw / 20)}px 'Segoe UI', sans-serif`;
         ctx.value.textAlign = "center";
+        ctx.font = '14px sans-serif'
         ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
       }
 
