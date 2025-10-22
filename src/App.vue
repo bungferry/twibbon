@@ -3,7 +3,7 @@
     <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
       <div class="controls">
-        <button class="btn" @click="triggerUpload">Unggah Foto</button>
+        <button class="btn" @click="triggerUpload">Upload</button>
         <input
           id="file"
           ref="fileInput"
