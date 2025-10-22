@@ -1,13 +1,29 @@
 <template>
-  <canvas ref="canvas" class="canvas"></canvas>
+  <div class='app'>
+    <div class='header'>
+      <h2>Twibbon Editor (Vite + Vue)</h2>
+      <div class='controls'>
+        <label class='btn' for='file'>Unggah Foto</label>
+        <input id='file' class='input-file' type='file' accept='image/*' @change='onFile' />
+        <button class='btn' @click='download' :disabled='!imageLoaded'>Unduh</button>
+      </div>
+    </div>
+
+    <div class='canvas-wrap'>
+      <canvas ref='canvas' class='canvas'></canvas>
+    </div>
+
+    <div class='toolbar'>
+      <small class='info'>Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).</small>
+    </div>
+  </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 
 export default {
-  props: ['twibbonUrl'],
-  setup(props, { expose }) {
+  setup() {
     const canvas = ref(null)
     const ctx = ref(null)
     const userImage = ref(null)
@@ -16,45 +32,56 @@ export default {
     const offset = ref({ x: 0, y: 0 })
     const dragging = ref(false)
     const last = ref({ x: 0, y: 0 })
+    const imageLoaded = ref(false)
+    const twibbonUrl = '/twibbon.png'
 
+    // ---- fungsi utama ----
     function draw() {
       const c = canvas.value
+      if (!c || !ctx.value) return
       const context = ctx.value
-      if (!context) return
 
       const size = Math.min(c.clientWidth, c.clientHeight)
       c.width = size
       c.height = size
       context.clearRect(0, 0, size, size)
 
+      // gambar user proporsional (fit tengah)
       if (userImage.value) {
         const img = userImage.value
-        // hitung rasio supaya gambar fit proporsional
-        const scaleRatio = Math.min(size / img.width, size / img.height) * scale.value
-        const drawWidth = img.width * scaleRatio
-        const drawHeight = img.height * scaleRatio
-        const dx = size / 2 - drawWidth / 2 + offset.value.x
-        const dy = size / 2 - drawHeight / 2 + offset.value.y
-        context.drawImage(img, dx, dy, drawWidth, drawHeight)
+        const ratio = Math.min(size / img.width, size / img.height) * scale.value
+        const drawW = img.width * ratio
+        const drawH = img.height * ratio
+        const dx = size / 2 - drawW / 2 + offset.value.x
+        const dy = size / 2 - drawH / 2 + offset.value.y
+        context.drawImage(img, dx, dy, drawW, drawH)
       }
 
+      // gambar twibbon overlay
       if (twibbonImage.value) {
         context.drawImage(twibbonImage.value, 0, 0, size, size)
       }
     }
 
-    function setImage(src) {
-      const img = new Image()
-      img.onload = () => {
-        userImage.value = img
-        offset.value = { x: 0, y: 0 }
-        scale.value = 1
-        draw()
+    function onFile(e) {
+      const f = e.target.files && e.target.files[0]
+      if (!f) return
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const img = new Image()
+        img.onload = () => {
+          userImage.value = img
+          offset.value = { x: 0, y: 0 }
+          scale.value = 1
+          imageLoaded.value = true
+          draw()
+        }
+        img.src = ev.target.result
       }
-      img.src = src
+      reader.readAsDataURL(f)
     }
 
-    function downloadComposite() {
+    function download() {
       draw()
       const link = document.createElement('a')
       link.download = 'twibbon-result.png'
@@ -62,11 +89,12 @@ export default {
       link.click()
     }
 
+    // ---- event ----
     onMounted(() => {
       ctx.value = canvas.value.getContext('2d')
 
       const twibbon = new Image()
-      twibbon.src = props.twibbonUrl
+      twibbon.src = twibbonUrl
       twibbon.onload = () => {
         twibbonImage.value = twibbon
         draw()
@@ -86,24 +114,23 @@ export default {
       })
       window.addEventListener('pointerup', () => (dragging.value = false))
 
-      // zoom (scroll)
+      // zoom
       canvas.value.addEventListener(
         'wheel',
         e => {
           e.preventDefault()
           scale.value += e.deltaY > 0 ? -0.05 : 0.05
-          scale.value = Math.max(0.2, Math.min(5, scale.value))
+          scale.value = Math.max(0.3, Math.min(5, scale.value))
           draw()
         },
         { passive: false }
       )
 
-      // responsive fix
+      // resize
       window.addEventListener('resize', draw)
     })
 
-    expose({ setImage, downloadComposite })
-    return { canvas }
+    return { onFile, download, imageLoaded, canvas }
   }
 }
 </script>
