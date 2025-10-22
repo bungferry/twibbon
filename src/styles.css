@@ -1,6 +1,6 @@
 *{box-sizing:border-box}
 html,body,#app{background:#f0f0f2;height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
-.app{background:#fdfdff;width:600px;margin:28px auto;padding:18px}
+.app{background:#fdfdff;width:600px;margin:5em auto;padding:2em}
 .header{display:flex;gap:12px;align-items:center;justify-content:space-between}
 .controls{display:flex;gap:8px;align-items:center}
 .canvas-wrap{width:100%;aspect-ratio:1/1;background:#f3f4f6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
