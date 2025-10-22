@@ -15,25 +15,33 @@
 
     <div class="toolbar">
       <small class="info">
-        Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
+        Seret 1 jari untuk memindahkan, cubit 2 jari untuk memperbesar, scroll untuk zoom (desktop)
       </small>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 export default {
   setup() {
     const canvas = ref(null)
     const ctx = ref(null)
-    const twibbonUrl = '/twibbon.png'
     const imageLoaded = ref(false)
     const userImage = ref(null)
     const twibbon = new Image()
+    const twibbonUrl = '/twibbon.png'
 
-    // Atur ukuran canvas agar selalu 1:1 dan responsif
+    // transformasi posisi dan skala
+    const offsetX = ref(0)
+    const offsetY = ref(0)
+    const scale = ref(1)
+    let isDragging = false
+    let lastX = 0
+    let lastY = 0
+    let lastDistance = 0
+
     function resizeCanvas() {
       const wrap = canvas.value.parentElement
       const size = Math.min(wrap.clientWidth, window.innerHeight * 0.7)
@@ -42,30 +50,25 @@ export default {
       drawCanvas()
     }
 
-    // Gambar ulang semua elemen ke canvas
     function drawCanvas() {
       if (!ctx.value) return
-      ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
+      const cw = canvas.value.width
+      const ch = canvas.value.height
+      ctx.value.clearRect(0, 0, cw, ch)
 
-      // Gambar foto user (proporsional, tidak crop)
       if (userImage.value) {
-        const cw = canvas.value.width
-        const ch = canvas.value.height
         const iw = userImage.value.width
         const ih = userImage.value.height
-
-        const scale = Math.min(cw / iw, ch / ih)
-        const nw = iw * scale
-        const nh = ih * scale
-        const x = (cw - nw) / 2
-        const y = (ch - nh) / 2
-
-        ctx.value.drawImage(userImage.value, x, y, nw, nh)
+        const baseScale = Math.min(cw / iw, ch / ih)
+        const newW = iw * baseScale * scale.value
+        const newH = ih * baseScale * scale.value
+        const x = (cw - newW) / 2 + offsetX.value
+        const y = (ch - newH) / 2 + offsetY.value
+        ctx.value.drawImage(userImage.value, x, y, newW, newH)
       }
 
-      // Gambar twibbon di atasnya
       if (twibbon.complete) {
-        ctx.value.drawImage(twibbon, 0, 0, canvas.value.width, canvas.value.height)
+        ctx.value.drawImage(twibbon, 0, 0, cw, ch)
       }
     }
 
@@ -78,6 +81,9 @@ export default {
         img.onload = () => {
           userImage.value = img
           imageLoaded.value = true
+          offsetX.value = 0
+          offsetY.value = 0
+          scale.value = 1
           drawCanvas()
         }
         img.src = ev.target.result
@@ -92,15 +98,75 @@ export default {
       link.click()
     }
 
+    function handleDown(e) {
+      isDragging = true
+      const touch = e.touches ? e.touches[0] : e
+      lastX = touch.clientX
+      lastY = touch.clientY
+    }
+
+    function handleMove(e) {
+      if (!userImage.value) return
+      if (e.touches && e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        if (lastDistance) {
+          const delta = dist - lastDistance
+          scale.value = Math.max(0.5, Math.min(5, scale.value + delta / 200))
+          drawCanvas()
+        }
+        lastDistance = dist
+        return
+      }
+
+      if (!isDragging || (e.touches && e.touches.length > 1)) return
+      const touch = e.touches ? e.touches[0] : e
+      const dx = touch.clientX - lastX
+      const dy = touch.clientY - lastY
+      lastX = touch.clientX
+      lastY = touch.clientY
+      offsetX.value += dx
+      offsetY.value += dy
+      drawCanvas()
+    }
+
+    function handleUp() {
+      isDragging = false
+      lastDistance = 0
+    }
+
+    function handleWheel(e) {
+      if (!userImage.value) return
+      const delta = e.deltaY < 0 ? 0.1 : -0.1
+      scale.value = Math.max(0.5, Math.min(5, scale.value + delta))
+      drawCanvas()
+    }
+
     onMounted(() => {
       ctx.value = canvas.value.getContext('2d')
       twibbon.onload = drawCanvas
       twibbon.src = twibbonUrl
       resizeCanvas()
+
       window.addEventListener('resize', resizeCanvas)
+      canvas.value.addEventListener('mousedown', handleDown)
+      canvas.value.addEventListener('mousemove', handleMove)
+      window.addEventListener('mouseup', handleUp)
+
+      canvas.value.addEventListener('touchstart', handleDown)
+      canvas.value.addEventListener('touchmove', handleMove)
+      canvas.value.addEventListener('touchend', handleUp)
+      canvas.value.addEventListener('wheel', handleWheel)
     })
 
-    return { onFile, download, canvas, imageLoaded }
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('mouseup', handleUp)
+    })
+
+    return { canvas, onFile, download, imageLoaded }
   }
 }
 </script>
