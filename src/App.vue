@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 
 export default {
   setup() {
@@ -39,7 +39,8 @@ export default {
     let dragging = false
     let last = { x: 0, y: 0, dist: 0 }
 
-    onMounted(() => {
+    onMounted(async () => {
+      await nextTick()
       const c = canvas.value
       ctx.value = c.getContext('2d')
       resizeCanvas()
@@ -57,8 +58,10 @@ export default {
 
     function resizeCanvas() {
       const c = canvas.value
-      c.width = c.clientWidth
-      c.height = c.clientHeight
+      const parent = c.parentElement
+      const size = parent.clientWidth // ambil lebar container
+      c.width = size
+      c.height = size // agar persegi 1:1
       draw()
     }
 
