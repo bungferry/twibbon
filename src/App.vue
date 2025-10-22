@@ -3,11 +3,9 @@
     <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
       <div class="controls">
-        <button class="btn" @click="triggerUpload">Upload</button>
+        <button class="btn" @click="triggerUpload">Unggah Foto</button>
         <input
-          id="file"
           ref="fileInput"
-          class="input-file"
           type="file"
           accept="image/*"
           @change="onFile"
@@ -61,11 +59,11 @@ export default {
 
     function drawCanvas() {
       if (!ctx.value) return;
-      ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height);
+      const cw = canvas.value.width;
+      const ch = canvas.value.height;
+      ctx.value.clearRect(0, 0, cw, ch);
 
       if (userImage.value) {
-        const cw = canvas.value.width;
-        const ch = canvas.value.height;
         const iw = userImage.value.width;
         const ih = userImage.value.height;
         const baseScale = Math.min(cw / iw, ch / ih);
@@ -75,10 +73,16 @@ export default {
         const x = cw / 2 - nw / 2 + offsetX.value;
         const y = ch / 2 - nh / 2 + offsetY.value;
         ctx.value.drawImage(userImage.value, x, y, nw, nh);
+      } else {
+        // === Placeholder teks saat belum ada gambar ===
+        ctx.value.fillStyle = "#aaa";
+        ctx.value.font = `${Math.floor(cw / 20)}px 'Segoe UI', sans-serif`;
+        ctx.value.textAlign = "center";
+        ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
       }
 
       if (twibbon.complete) {
-        ctx.value.drawImage(twibbon, 0, 0, canvas.value.width, canvas.value.height);
+        ctx.value.drawImage(twibbon, 0, 0, cw, ch);
       }
     }
 
@@ -112,7 +116,7 @@ export default {
       link.click();
     }
 
-    // Gestur drag dan zoom
+    // === Gesture dan Zoom ===
     function onPointerDown(e) {
       if (e.touches && e.touches.length === 2) {
         lastDistance = getDistance(e.touches);
