@@ -1,7 +1,5 @@
 <template>
-  <div class="canvas-container">
-    <canvas ref="canvas" class="canvas"></canvas>
-  </div>
+  <canvas ref="canvas" class="canvas"></canvas>
 </template>
 
 <script>
@@ -27,21 +25,21 @@ export default {
       const size = Math.min(c.clientWidth, c.clientHeight)
       c.width = size
       c.height = size
-
-      context.clearRect(0, 0, c.width, c.height)
+      context.clearRect(0, 0, size, size)
 
       if (userImage.value) {
         const img = userImage.value
-        const ratio = Math.min(c.width / img.width, c.height / img.height)
-        const drawWidth = img.width * ratio * scale.value
-        const drawHeight = img.height * ratio * scale.value
-        const dx = c.width / 2 - drawWidth / 2 + offset.value.x
-        const dy = c.height / 2 - drawHeight / 2 + offset.value.y
+        // hitung rasio supaya gambar fit proporsional
+        const scaleRatio = Math.min(size / img.width, size / img.height) * scale.value
+        const drawWidth = img.width * scaleRatio
+        const drawHeight = img.height * scaleRatio
+        const dx = size / 2 - drawWidth / 2 + offset.value.x
+        const dy = size / 2 - drawHeight / 2 + offset.value.y
         context.drawImage(img, dx, dy, drawWidth, drawHeight)
       }
 
       if (twibbonImage.value) {
-        context.drawImage(twibbonImage.value, 0, 0, c.width, c.height)
+        context.drawImage(twibbonImage.value, 0, 0, size, size)
       }
     }
 
@@ -74,13 +72,11 @@ export default {
         draw()
       }
 
-      let startDist = 0
-
+      // drag
       canvas.value.addEventListener('pointerdown', e => {
         dragging.value = true
         last.value = { x: e.clientX, y: e.clientY }
       })
-
       window.addEventListener('pointermove', e => {
         if (!dragging.value) return
         offset.value.x += e.clientX - last.value.x
@@ -88,16 +84,22 @@ export default {
         last.value = { x: e.clientX, y: e.clientY }
         draw()
       })
+      window.addEventListener('pointerup', () => (dragging.value = false))
 
-      window.addEventListener('pointerup', () => dragging.value = false)
+      // zoom (scroll)
+      canvas.value.addEventListener(
+        'wheel',
+        e => {
+          e.preventDefault()
+          scale.value += e.deltaY > 0 ? -0.05 : 0.05
+          scale.value = Math.max(0.2, Math.min(5, scale.value))
+          draw()
+        },
+        { passive: false }
+      )
 
-      canvas.value.addEventListener('wheel', e => {
-        e.preventDefault()
-        scale.value += e.deltaY > 0 ? -0.05 : 0.05
-        if (scale.value < 0.2) scale.value = 0.2
-        if (scale.value > 5) scale.value = 5
-        draw()
-      }, { passive: false })
+      // responsive fix
+      window.addEventListener('resize', draw)
     })
 
     expose({ setImage, downloadComposite })
@@ -105,21 +107,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.canvas-container {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  aspect-ratio: 1 / 1;
-  position: relative;
-}
-
-.canvas {
-  width: 100%;
-  height: auto;
-  background: #f3f3f3;
-  border-radius: 10px;
-  display: block;
-}
-</style>
