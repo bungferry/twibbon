@@ -76,7 +76,7 @@ export default {
       } else {
         // === Placeholder teks saat belum ada gambar ===
         ctx.value.fillStyle = "#aaa";
-        ctx.value.font = `${Math.floor(cw / 14)}px 'Segoe UI', sans-serif`;
+        ctx.value.font = `${Math.floor(cw / 30)}px 'Segoe UI', sans-serif`;
         ctx.value.textAlign = "center";
         ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
       }
