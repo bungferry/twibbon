@@ -1,6 +1,6 @@
 *{box-sizing:border-box}
 html,body,#app{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
-.app{max-width:980px;margin:28px auto;padding:18px}
+.app{width:600px;margin:28px auto;padding:18px}
 .header{display:flex;gap:12px;align-items:center;justify-content:space-between}
 .controls{display:flex;gap:8px;align-items:center}
 .canvas-wrap{width:100%;aspect-ratio:1/1;background:#f3f4f6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
@@ -9,3 +9,4 @@ html,body,#app{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,
 .input-file{display:none}
 .toolbar{display:flex;gap:8px;margin-top:12px}
 small{color:#666}
+@media (max-width: 700px) {.app {margin: 0 auto;width: auto;}}
