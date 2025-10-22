@@ -3,7 +3,7 @@
     <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
       <div class="controls">
-        <button class="btn" @click="triggerUpload">Unggah Foto</button>
+        <button class="btn" @click="triggerUpload">Upload</button>
         <input
           ref="fileInput"
           type="file"
@@ -78,7 +78,7 @@ export default {
         ctx.value.fillStyle = "#aaa";
         ctx.value.font = `${Math.floor(cw / 20)}px 'Segoe UI', sans-serif`;
         ctx.value.textAlign = "center";
-        ctx.font = '14px sans-serif'
+        ctx.font = '14px sans-serif';
         ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
       }
 
