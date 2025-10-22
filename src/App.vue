@@ -1,20 +1,22 @@
 <template>
-  <div class='app'>
-    <div class='header'>
+  <div class="app">
+    <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
-      <div class='controls'>
-        <label class='btn' for='file'>Unggah Foto</label>
-        <input id='file' class='input-file' type='file' accept='image/*' @change='onFile' />
-        <button class='btn' @click='download' :disabled='!imageLoaded'>Unduh</button>
+      <div class="controls">
+        <label class="btn" for="file">Unggah Foto</label>
+        <input id="file" class="input-file" type="file" accept="image/*" @change="onFile" />
+        <button class="btn" @click="download" :disabled="!imageLoaded">Unduh</button>
       </div>
     </div>
 
-    <div class='canvas-wrap'>
-      <canvas ref='canvas' class='canvas'></canvas>
+    <div class="canvas-wrap">
+      <canvas ref="canvas" class="canvas"></canvas>
     </div>
 
-    <div class='toolbar'>
-      <small class='info'>Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).</small>
+    <div class="toolbar">
+      <small class="info">
+        Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
+      </small>
     </div>
   </div>
 </template>
@@ -26,111 +28,79 @@ export default {
   setup() {
     const canvas = ref(null)
     const ctx = ref(null)
-    const userImage = ref(null)
-    const twibbonImage = ref(null)
-    const scale = ref(1)
-    const offset = ref({ x: 0, y: 0 })
-    const dragging = ref(false)
-    const last = ref({ x: 0, y: 0 })
-    const imageLoaded = ref(false)
     const twibbonUrl = '/twibbon.png'
+    const imageLoaded = ref(false)
+    const userImage = ref(null)
+    const twibbon = new Image()
 
-    // ---- fungsi utama ----
-    function draw() {
-      const c = canvas.value
-      if (!c || !ctx.value) return
-      const context = ctx.value
+    // Atur ukuran canvas agar selalu 1:1 dan responsif
+    function resizeCanvas() {
+      const wrap = canvas.value.parentElement
+      const size = Math.min(wrap.clientWidth, window.innerHeight * 0.7)
+      canvas.value.width = size
+      canvas.value.height = size
+      drawCanvas()
+    }
 
-      const size = Math.min(c.clientWidth, c.clientHeight)
-      c.width = size
-      c.height = size
-      context.clearRect(0, 0, size, size)
+    // Gambar ulang semua elemen ke canvas
+    function drawCanvas() {
+      if (!ctx.value) return
+      ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height)
 
-      // gambar user proporsional (fit tengah)
+      // Gambar foto user (proporsional, tidak crop)
       if (userImage.value) {
-        const img = userImage.value
-        const ratio = Math.min(size / img.width, size / img.height) * scale.value
-        const drawW = img.width * ratio
-        const drawH = img.height * ratio
-        const dx = size / 2 - drawW / 2 + offset.value.x
-        const dy = size / 2 - drawH / 2 + offset.value.y
-        context.drawImage(img, dx, dy, drawW, drawH)
+        const cw = canvas.value.width
+        const ch = canvas.value.height
+        const iw = userImage.value.width
+        const ih = userImage.value.height
+
+        const scale = Math.min(cw / iw, ch / ih)
+        const nw = iw * scale
+        const nh = ih * scale
+        const x = (cw - nw) / 2
+        const y = (ch - nh) / 2
+
+        ctx.value.drawImage(userImage.value, x, y, nw, nh)
       }
 
-      // gambar twibbon overlay
-      if (twibbonImage.value) {
-        context.drawImage(twibbonImage.value, 0, 0, size, size)
+      // Gambar twibbon di atasnya
+      if (twibbon.complete) {
+        ctx.value.drawImage(twibbon, 0, 0, canvas.value.width, canvas.value.height)
       }
     }
 
     function onFile(e) {
-      const f = e.target.files && e.target.files[0]
-      if (!f) return
+      const file = e.target.files && e.target.files[0]
+      if (!file) return
       const reader = new FileReader()
       reader.onload = ev => {
         const img = new Image()
         img.onload = () => {
           userImage.value = img
-          offset.value = { x: 0, y: 0 }
-          scale.value = 1
           imageLoaded.value = true
-          draw()
+          drawCanvas()
         }
         img.src = ev.target.result
       }
-      reader.readAsDataURL(f)
+      reader.readAsDataURL(file)
     }
 
     function download() {
-      draw()
       const link = document.createElement('a')
       link.download = 'twibbon-result.png'
       link.href = canvas.value.toDataURL('image/png')
       link.click()
     }
 
-    // ---- event ----
     onMounted(() => {
       ctx.value = canvas.value.getContext('2d')
-
-      const twibbon = new Image()
+      twibbon.onload = drawCanvas
       twibbon.src = twibbonUrl
-      twibbon.onload = () => {
-        twibbonImage.value = twibbon
-        draw()
-      }
-
-      // drag
-      canvas.value.addEventListener('pointerdown', e => {
-        dragging.value = true
-        last.value = { x: e.clientX, y: e.clientY }
-      })
-      window.addEventListener('pointermove', e => {
-        if (!dragging.value) return
-        offset.value.x += e.clientX - last.value.x
-        offset.value.y += e.clientY - last.value.y
-        last.value = { x: e.clientX, y: e.clientY }
-        draw()
-      })
-      window.addEventListener('pointerup', () => (dragging.value = false))
-
-      // zoom
-      canvas.value.addEventListener(
-        'wheel',
-        e => {
-          e.preventDefault()
-          scale.value += e.deltaY > 0 ? -0.05 : 0.05
-          scale.value = Math.max(0.3, Math.min(5, scale.value))
-          draw()
-        },
-        { passive: false }
-      )
-
-      // resize
-      window.addEventListener('resize', draw)
+      resizeCanvas()
+      window.addEventListener('resize', resizeCanvas)
     })
 
-    return { onFile, download, imageLoaded, canvas }
+    return { onFile, download, canvas, imageLoaded }
   }
 }
 </script>
