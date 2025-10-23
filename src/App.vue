@@ -111,7 +111,13 @@ export default {
 
     function download() {
       const link = document.createElement("a");
-      link.download = "twibbon-result.png";
+      const hostname = window.location.hostname.replace(/^www\./, ""); 
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, "0");
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = now.getFullYear();
+      
+      link.download = `${hostname}-${day}-${month}-${year}.png`; 
       link.href = canvas.value.toDataURL("image/png");
       link.click();
     }
