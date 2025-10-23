@@ -63,8 +63,8 @@ small{color:#666}
   color: white;
   border: none;
   border-radius: 50%; /* Membuat tombol bulat */
-  width: 45px; /* Ukuran tombol */
-  height: 45px; /* Ukuran tombol */
+  width: 35px; /* Ukuran tombol */
+  height: 35px; /* Ukuran tombol */
   display: flex;
   align-items: center;
   justify-content: center;
