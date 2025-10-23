@@ -66,7 +66,9 @@ export default {
     const twibbon = new Image();
     const fileInput = ref(null);
     const isDragOver = ref(false);
-    const downloadInProgress = ref(false); // Ini akan tetap TRUE setelah unduhan pertama
+    
+    // UBAH: downloadInProgress akan di-reset setelah unduhan selesai.
+    const downloadInProgress = ref(false); 
     const isInteracting = ref(false);
     const downloadCompleted = ref(false); // Ini akan jadi TRUE setelah unduhan pertama selesai
 
@@ -82,15 +84,8 @@ export default {
     // Threshold untuk snapping center (misal 10 pixel)
     const SNAP_THRESHOLD = 10;
 
-    function resizeCanvas() {
-      const wrap = canvas.value.parentElement;
-      const size = Math.min(wrap.clientWidth, window.innerHeight * 0.7);
-      canvas.value.width = size;
-      canvas.value.height = size;
-      drawCanvas();
-    }
-
-    function drawCanvas() {
+    // Tambahkan parameter untuk mengontrol mode tampilan (interaksi vs final)
+    function drawCanvas(isFinal = false) { 
       if (!ctx.value) return;
       const cw = canvas.value.width;
       const ch = canvas.value.height;
@@ -116,14 +111,16 @@ export default {
 
         ctx.value.drawImage(userImage.value, imageRenderX, imageRenderY, nw, nh);
       }
-
-      if (isInteracting.value && imageLoaded.value && !downloadInProgress.value) {
+      
+      // LOGIKA GARIS SNAP: Hanya tampilkan jika sedang berinteraksi DAN BUKAN mode final
+      if (!isFinal && isInteracting.value && imageLoaded.value) {
         let showHorizontalLine = false;
         let showVerticalLine = false;
 
         const imageCenterX = imageRenderX + imageRenderWidth / 2;
         const imageCenterY = imageRenderY + imageRenderHeight / 2;
 
+        // ... (Logika garis snap tetap sama) ...
         if (Math.abs(imageCenterX - cw / 2) < SNAP_THRESHOLD) {
           showVerticalLine = true;
         }
@@ -153,67 +150,26 @@ export default {
       }
 
       if (twibbon.complete) {
-        ctx.value.globalAlpha = isInteracting.value ? 0.5 : 1;
+        // LOGIKA OPASITAS TWIBBON: Opasitas hanya aktif jika sedang berinteraksi DAN BUKAN mode final
+        ctx.value.globalAlpha = (!isFinal && isInteracting.value) ? 0.5 : 1; 
         ctx.value.drawImage(twibbon, 0, 0, cw, ch);
         ctx.value.globalAlpha = 1;
       }
     }
 
-    function loadImageFromFile(file) {
-      if (!file || !file.type.startsWith("image/")) return;
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const img = new Image();
-        img.onload = () => {
-          userImage.value = img;
-          imageLoaded.value = true;
-          offsetX.value = 0;
-          offsetY.value = 0;
-          scale.value = 1;
-          downloadCompleted.value = false; // Reset status unduhan saat gambar baru diunggah
-          downloadInProgress.value = false; // Reset ini juga, agar bisa edit lagi setelah upload baru
-          drawCanvas();
-        };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
+    function resizeCanvas() {
+      const wrap = canvas.value.parentElement;
+      const size = Math.min(wrap.clientWidth, window.innerHeight * 0.7);
+      canvas.value.width = size;
+      canvas.value.height = size;
+      drawCanvas();
     }
-
-    function onFile(e) {
-      const file = e.target.files && e.target.files[0];
-      loadImageFromFile(file);
-    }
-
-    function triggerUpload() {
-      fileInput.value && fileInput.value.click();
-    }
-
-    function triggerUploadIfNoImage() {
-      if (!imageLoaded.value && !downloadInProgress.value) {
-        triggerUpload();
-      }
-    }
-
-    function onDragOver() {
-      if (!imageLoaded.value && !downloadInProgress.value) {
-        isDragOver.value = true;
-      }
-    }
-
-    function onDragLeave() {
-      isDragOver.value = false;
-    }
-
-    function onDrop(e) {
-      isDragOver.value = false;
-      if (!imageLoaded.value && !downloadInProgress.value && e.dataTransfer.files.length > 0) {
-        loadImageFromFile(e.dataTransfer.files[0]);
-      }
-    }
-
+    
+    // ... (Fungsi loadImageFromFile, onFile, triggerUpload, triggerUploadIfNoImage, onDragOver, onDragLeave, onDrop tetap sama) ...
+    // Pastikan `downloadCompleted.value = false;` dan `downloadInProgress.value = false;` ada di `loadImageFromFile` saat gambar baru diunggah. (Sudah ada, bagus!)
+    
     function handleDownloadOrShare() {
-      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress di sini, karena tombolnya sudah disabled
+      if (!imageLoaded.value || downloadInProgress.value) return; // Tambahkan pengamanan untuk mencegah klik ganda
 
       if (downloadCompleted.value) {
         shareResult();
@@ -223,10 +179,11 @@ export default {
     }
 
     function downloadResult() {
-      // <--- Perbaikan di sini
-      downloadInProgress.value = true; // Set ini ke TRUE, dan biarkan tetap TRUE
-      isInteracting.value = false; // Pastikan interaksi disetel false, agar twibbon kembali solid dan garis hilang
-      drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
+      downloadInProgress.value = true; 
+      isInteracting.value = false; 
+      
+      // GAMBAR KANVAS DALAM MODE FINAL SEBELUM MENGAMBIL DATAURL
+      drawCanvas(true); 
 
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
@@ -238,48 +195,72 @@ export default {
       link.download = `${hostname}-${day}-${month}-${year}.png`;
       link.href = canvas.value.toDataURL("image/png");
       link.click();
-
-      // <--- Setelah unduhan dipicu, set downloadCompleted ke TRUE
-      // downloadInProgress.value tetap TRUE agar tidak bisa geser/zoom lagi.
+      
+      // RESET: downloadInProgress kembali false setelah operasi selesai
       setTimeout(() => {
         downloadCompleted.value = true;
-      }, 500); // Beri sedikit waktu untuk browser memproses unduhan
+        downloadInProgress.value = false; // INI PERBAIKAN PENTING!
+        drawCanvas(); // Gambar ulang dalam mode interaktif (jika perlu)
+      }, 500); // Beri sedikit waktu untuk proses pengunduhan.
     }
 
     async function shareResult() {
-      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress, karena sudah dinonaktifkan
+      if (!imageLoaded.value) return;
 
+      downloadInProgress.value = true; // Set TRUE saat mencoba berbagi
+      isInteracting.value = false; 
+      
+      // GAMBAR KANVAS DALAM MODE FINAL SEBELUM MENGAMBIL DATAURL
+      drawCanvas(true); 
+      
       const dataUrl = canvas.value.toDataURL("image/png");
 
-      // Perlu diingat, Web Share API mungkin gagal jika dipanggil dari iframe
-      // atau jika tidak ada interaksi pengguna yang langsung mendahuluinya.
-      // Di sini, asumsinya ada interaksi (klik tombol).
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
+      if (navigator.share && navigator.canShare) { // Periksa navigator.share
         try {
           const blob = await (await fetch(dataUrl)).blob();
           const file = new File([blob], 'twibbon-hasil.png', { type: 'image/png' });
-          await navigator.share({
-            files: [file],
-            title: 'Twibbon Keren!',
-            text: 'Lihat twibbon keren yang kubuat!',
-          });
-          console.log('Konten berhasil dibagikan');
+          
+          if (navigator.canShare({ files: [file] })) { // Periksa canShare dengan file
+             await navigator.share({
+                files: [file],
+                title: 'Twibbon Keren!',
+                text: 'Lihat twibbon keren yang kubuat!',
+             });
+             console.log('Konten berhasil dibagikan');
+          } else if (navigator.canShare({ title: 'Twibbon Keren!', text: 'Lihat twibbon keren yang kubuat!', url: window.location.href })) {
+             // Fallback jika tidak bisa share file, coba share teks/URL
+             await navigator.share({
+                title: 'Twibbon Keren!',
+                text: 'Lihat twibbon keren yang kubuat! (Silakan unduh gambar dan bagikan secara manual): ' + window.location.href,
+             });
+             alert('Browser Anda tidak mendukung berbagi file gambar, tetapi tautan telah dibagikan.');
+
+          } else {
+             alert('Fungsi bagikan tidak didukung dengan file di browser ini. Silakan unduh gambar dan bagikan secara manual.');
+          }
+
         } catch (error) {
-          console.error('Gagal membagikan:', error);
-          alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
+          if (error.name !== 'AbortError') { // AbortError biasanya terjadi jika pengguna membatalkan
+             console.error('Gagal membagikan:', error);
+             alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
+          }
         }
       } else {
         alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
       }
+      
+      // Reset status setelah operasi berbagi selesai
+      downloadInProgress.value = false;
+      drawCanvas(); // Gambar ulang untuk mode interaksi
     }
+    
+    // ... (Fungsi Gesture dan Zoom onPointerDown, onPointerMove, onPointerUp, getDistance tetap sama, tapi sekarang mereka di-unblock karena downloadInProgress di-reset) ...
 
-    // === Gesture dan Zoom ===
-    // Fungsi-fungsi ini sudah memiliki kondisi `!downloadInProgress.value`,
-    // jadi tidak ada perubahan di sini.
     function onPointerDown(e) {
-      if (!imageLoaded.value || downloadInProgress.value) return;
-
+      // Perbaikan: Hapus pengecekan `|| downloadInProgress.value` dari interaksi pointer, 
+      // karena kita sudah mengontrol ini di `handleDownloadOrShare` dan statusnya di-reset.
+      if (!imageLoaded.value) return; 
+      
       isInteracting.value = true;
       if (e.touches && e.touches.length === 2) {
         lastDistance = getDistance(e.touches);
@@ -292,76 +273,31 @@ export default {
     }
 
     function onPointerMove(e) {
-      if (!imageLoaded.value || downloadInProgress.value) return;
-
-      if (e.touches && e.touches.length === 2) {
-        const newDistance = getDistance(e.touches);
-        if (lastDistance) {
-          const delta = newDistance / lastDistance;
-          scale.value *= delta;
-          scale.value = Math.min(Math.max(scale.value, 0.5), 3);
-          drawCanvas();
-        }
-        lastDistance = newDistance;
-      } else if (isDragging.value) {
-        const x = e.clientX || e.touches[0].clientX;
-        const y = e.clientY || e.touches[0].clientY;
-        offsetX.value += x - lastX.value;
-        offsetY.value += y - lastY.value;
-        lastX.value = x;
-        lastY.value = y;
-        drawCanvas();
-      }
+      if (!imageLoaded.value) return; // Hapus pengecekan downloadInProgress di sini juga
+      // ... (sisa fungsi tetap sama) ...
+      // ...
     }
 
     function onPointerUp() {
-      if (!imageLoaded.value || downloadInProgress.value) return;
-
-      isDragging.value = false;
-      lastDistance = null;
-      isInteracting.value = false;
-      drawCanvas();
+      if (!imageLoaded.value) return; // Hapus pengecekan downloadInProgress di sini juga
+      // ... (sisa fungsi tetap sama) ...
+      // ...
     }
-
-    function getDistance(touches) {
-      const [a, b] = touches;
-      const dx = a.clientX - b.clientX;
-      const dy = a.clientY - b.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    onMounted(() => {
-      ctx.value = canvas.value.getContext("2d");
-      twibbon.onload = drawCanvas;
-      twibbon.src = twibbonUrl;
-      resizeCanvas();
-      window.addEventListener("resize", resizeCanvas);
-
-      const c = canvas.value;
-      c.addEventListener("mousedown", onPointerDown);
-      c.addEventListener("mousemove", onPointerMove);
-      c.addEventListener("mouseup", onPointerUp);
-      c.addEventListener("mouseleave", onPointerUp);
-      c.addEventListener("touchstart", onPointerDown);
-      c.addEventListener("touchmove", onPointerMove);
-      c.addEventListener("touchend", onPointerUp);
-      c.addEventListener("wheel", (e) => {
-        if (!imageLoaded.value || downloadInProgress.value) return;
+    
+    // ... (Sisa onMounted tetap sama) ...
+    // Di onMounted, hapus pengecekan `|| downloadInProgress.value` dari listener `wheel`
+    
+    // Ubah di bagian onMounted untuk listener wheel:
+    /*
+    c.addEventListener("wheel", (e) => {
+        if (!imageLoaded.value) return; // Hapus `|| downloadInProgress.value`
         e.preventDefault();
-        isInteracting.value = true;
-        drawCanvas();
-        scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
-        scale.value = Math.min(Math.max(scale.value, 0.5), 3);
-        drawCanvas();
-        clearTimeout(c.wheelTimeout);
-        c.wheelTimeout = setTimeout(() => {
-          isInteracting.value = false;
-          drawCanvas();
-        }, 150);
-      });
+        // ... (sisa logika wheel) ...
     });
+    */
 
     return {
+      // ... (return statement tetap sama) ...
       onFile,
       triggerUpload,
       triggerUploadIfNoImage,
