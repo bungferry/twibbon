@@ -54,7 +54,6 @@
 
     export default {
         setup() {
-            // ... (Deklarasi ref dan variabel lain tetap sama) ...
             const canvas = ref(null);
             const ctx = ref(null);
             const twibbonUrl = "/twibbon.png";
@@ -114,7 +113,6 @@
 
             async function trackSupport() {
               try {
-                // 🌟 PERBAIKAN KRITIS: Tambahkan lokal dulu untuk pengalaman instan
                 supportCount.value += 1; 
                 console.log("Dukungan bertambah secara lokal (Instan).");
 
@@ -123,10 +121,7 @@
                 });
                 
                 if (error) {
-                  // Jika RPC gagal, berpotensi terjadi double increment yang salah
                   console.error("Gagal melacak dukungan di server:", error.message);
-                  // Pada kasus gagal total, idealnya Anda mengurangi lagi supportCount.value -= 1; 
-                  // Tapi kita biarkan saja untuk kesederhanaan.
                 } else {
                   console.log("RPC ke server berhasil (Menunggu sinkronisasi Real-time untuk browser lain).");
                 }
@@ -139,7 +134,6 @@
             // FUNGSI REAL-TIME LISTENER
             // ------------------------------------
             function subscribeToSupportChanges() {
-              // Kita pertahankan listener ini untuk sinkronisasi SEMUA browser lain.
               supabase.removeChannel('twibbon-support-channel');
 
               const supportChannel = supabase
@@ -154,9 +148,6 @@
                   },
                   (payload) => {
                     if (payload.new && payload.new.count_total !== undefined) {
-                      // Ini akan terjadi beberapa saat SETELAH penambahan lokal 
-                      // pada browser yang mengklik. Terjadi DOUBLE increment, 
-                      // tetapi ini adalah solusi paling stabil.
                       supportCount.value = payload.new.count_total; 
                     }
                   }
