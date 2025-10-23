@@ -80,7 +80,6 @@ small {
     }
 }
 
-/* CSS baru atau yang dimodifikasi untuk drop area */
 .drop-area {
     position: absolute;
     top: 0;
@@ -97,7 +96,6 @@ small {
     color: #888;
     font-size: 1.2em;
     z-index: 10;
-    /* Pastikan di atas canvas */
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
@@ -123,48 +121,28 @@ small {
 .download-share-btn {
     position: absolute;
     bottom: 15px;
-    /* Sesuaikan jarak dari bawah */
     right: 15px;
-    /* Sesuaikan jarak dari kanan */
     z-index: 20;
-    /* Pastikan di atas canvas dan drop-area */
-
-    /* --- PERUBAHAN UTAMA: Hapus Background dan Dimensi --- */
     background: none;
-    /* Menghilangkan background */
     border: none;
-    /* Menghilangkan border */
     border-radius: 0;
-    /* Menghilangkan border-radius */
     width: auto;
-    /* Sesuaikan lebar dengan konten */
     height: auto;
-    /* Sesuaikan tinggi dengan konten */
     box-shadow: none;
-    /* Menghilangkan bayangan */
-    /* --- AKHIR PERUBAHAN UTAMA --- */
-
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-size: 1.8em;
-    /* Ukuran ikon Font Awesome (ditingkatkan agar mudah diklik) */
     padding: 5px;
-    /* Tambahkan sedikit padding agar area klik lebih nyaman */
     transition: color 0.3s ease, transform 0.2s ease;
-
-    /* Opsional: Tambahkan sedikit bayangan teks agar ikon menonjol di atas gambar */
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
 .download-share-btn:hover:not(:disabled) {
-    /* Ubah hanya warna ikon saat hover */
     background: none;
-    /* Pastikan background tetap hilang */
     transform: scale(1.1);
-    /* Sedikit efek zoom saat hover */
     box-shadow: none;
 }
 
