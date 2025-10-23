@@ -65,6 +65,9 @@ export default {
     const isDragging = ref(false);
     let lastDistance = null;
 
+    // Threshold untuk snapping center (misal 10 pixel)
+    const SNAP_THRESHOLD = 10;
+
     function resizeCanvas() {
       const wrap = canvas.value.parentElement;
       const size = Math.min(wrap.clientWidth, window.innerHeight * 0.7);
@@ -79,6 +82,11 @@ export default {
       const ch = canvas.value.height;
       ctx.value.clearRect(0, 0, cw, ch);
 
+      let imageRenderX = 0;
+      let imageRenderY = 0;
+      let imageRenderWidth = 0;
+      let imageRenderHeight = 0;
+
       if (userImage.value) {
         const iw = userImage.value.width;
         const ih = userImage.value.height;
@@ -86,30 +94,55 @@ export default {
         const finalScale = baseScale * scale.value;
         const nw = iw * finalScale;
         const nh = ih * finalScale;
-        const x = cw / 2 - nw / 2 + offsetX.value;
-        const y = ch / 2 - nh / 2 + offsetY.value;
-        ctx.value.drawImage(userImage.value, x, y, nw, nh);
+
+        imageRenderWidth = nw;
+        imageRenderHeight = nh;
+        imageRenderX = cw / 2 - nw / 2 + offsetX.value;
+        imageRenderY = ch / 2 - nh / 2 + offsetY.value;
+
+        ctx.value.drawImage(userImage.value, imageRenderX, imageRenderY, nw, nh);
       }
 
-      // <--- Logika baru: Gambar garis titik pusat jika sedang berinteraksi
+      // <--- Logika Baru untuk Garis Titik Pusat Dinamis
       if (isInteracting.value && imageLoaded.value && !downloadInProgress.value) {
-        ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)"; // Warna garis
+        let showHorizontalLine = false;
+        let showVerticalLine = false;
+
+        // Hitung posisi tengah gambar yang sedang di-render
+        const imageCenterX = imageRenderX + imageRenderWidth / 2;
+        const imageCenterY = imageRenderY + imageRenderHeight / 2;
+
+        // Periksa apakah posisi tengah gambar mendekati posisi tengah kanvas
+        if (Math.abs(imageCenterX - cw / 2) < SNAP_THRESHOLD) {
+          showVerticalLine = true;
+          // Opsional: "Snap" gambar ke tengah jika sangat dekat
+          // offsetX.value += (cw / 2) - imageCenterX;
+        }
+        if (Math.abs(imageCenterY - ch / 2) < SNAP_THRESHOLD) {
+          showHorizontalLine = true;
+          // Opsional: "Snap" gambar ke tengah jika sangat dekat
+          // offsetY.value += (ch / 2) - imageCenterY;
+        }
+
+        ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)";
         ctx.value.lineWidth = 1;
-        ctx.value.setLineDash([5, 5]); // Garis putus-putus
+        ctx.value.setLineDash([5, 5]);
 
-        // Garis Horizontal
-        ctx.value.beginPath();
-        ctx.value.moveTo(0, ch / 2);
-        ctx.value.lineTo(cw, ch / 2);
-        ctx.value.stroke();
+        if (showHorizontalLine) {
+          ctx.value.beginPath();
+          ctx.value.moveTo(0, ch / 2);
+          ctx.value.lineTo(cw, ch / 2);
+          ctx.value.stroke();
+        }
 
-        // Garis Vertikal
-        ctx.value.beginPath();
-        ctx.value.moveTo(cw / 2, 0);
-        ctx.value.lineTo(cw / 2, ch);
-        ctx.value.stroke();
+        if (showVerticalLine) {
+          ctx.value.beginPath();
+          ctx.value.moveTo(cw / 2, 0);
+          ctx.value.lineTo(cw / 2, ch);
+          ctx.value.stroke();
+        }
 
-        ctx.value.setLineDash([]); // Kembalikan ke garis solid
+        ctx.value.setLineDash([]);
       }
 
       if (twibbon.complete) {
