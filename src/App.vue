@@ -10,7 +10,7 @@
           @change="onFile"
           style="display: none"
         />
-        <button class="btn" @click="download" :disabled="!imageLoaded || downloadInProgress">Unduh</button>
+        <!-- Tombol Unduh/Bagikan sekarang ada di dalam canvas-wrap -->
       </div>
     </div>
 
@@ -30,6 +30,18 @@
         <div class="drop-area-text">Seret & lepas gambar di sini</div>
         <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
       </div>
+
+      <!-- Tombol Unduh/Bagikan -->
+      <button
+        v-if="imageLoaded"
+        class="download-share-btn"
+        @click="handleDownloadOrShare"
+        :disabled="downloadInProgress"
+        :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
+      >
+        <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
+      </button>
+
     </div>
 
     <div class="toolbar">
@@ -55,6 +67,7 @@ export default {
     const isDragOver = ref(false);
     const downloadInProgress = ref(false);
     const isInteracting = ref(false);
+    const downloadCompleted = ref(false); // <--- State baru: Untuk melacak apakah unduhan sudah selesai
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -103,29 +116,21 @@ export default {
         ctx.value.drawImage(userImage.value, imageRenderX, imageRenderY, nw, nh);
       }
 
-      // <--- Logika Baru untuk Garis Titik Pusat Dinamis
       if (isInteracting.value && imageLoaded.value && !downloadInProgress.value) {
         let showHorizontalLine = false;
         let showVerticalLine = false;
 
-        // Hitung posisi tengah gambar yang sedang di-render
         const imageCenterX = imageRenderX + imageRenderWidth / 2;
         const imageCenterY = imageRenderY + imageRenderHeight / 2;
 
-        // Periksa apakah posisi tengah gambar mendekati posisi tengah kanvas
         if (Math.abs(imageCenterX - cw / 2) < SNAP_THRESHOLD) {
           showVerticalLine = true;
-          // Opsional: "Snap" gambar ke tengah jika sangat dekat
-          // offsetX.value += (cw / 2) - imageCenterX;
         }
         if (Math.abs(imageCenterY - ch / 2) < SNAP_THRESHOLD) {
           showHorizontalLine = true;
-          // Opsional: "Snap" gambar ke tengah jika sangat dekat
-          // offsetY.value += (ch / 2) - imageCenterY;
         }
 
-     //   ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)";
-        ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)"; // Warna putih dengan opasitas 60%
+        ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)"; // Warna putih
         ctx.value.lineWidth = 1;
         ctx.value.setLineDash([5, 5]);
 
@@ -165,6 +170,7 @@ export default {
           offsetX.value = 0;
           offsetY.value = 0;
           scale.value = 1;
+          downloadCompleted.value = false; // Reset status unduhan saat gambar baru diunggah
           drawCanvas();
         };
         img.src = ev.target.result;
@@ -204,10 +210,19 @@ export default {
       }
     }
 
-    function download() {
+    // <--- Fungsi baru untuk handle Unduh atau Bagikan
+    function handleDownloadOrShare() {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
-      downloadInProgress.value = true;
+      if (downloadCompleted.value) {
+        shareResult();
+      } else {
+        downloadResult();
+      }
+    }
+
+    function downloadResult() {
+      downloadInProgress.value = true; // Set download in progress to disable interactions
 
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
@@ -219,7 +234,44 @@ export default {
       link.download = `${hostname}-${day}-${month}-${year}.png`;
       link.href = canvas.value.toDataURL("image/png");
       link.click();
+
+      // Setelah beberapa saat (untuk memastikan unduhan dimulai), ubah status
+      setTimeout(() => {
+        downloadCompleted.value = true; // Indikasi unduhan selesai, tombol ganti jadi bagikan
+        downloadInProgress.value = false; // Interaksi bisa diaktifkan kembali jika Anda mau
+                                            // Atau tetap biarkan downloadInProgress=true untuk menonaktifkan geser/zoom
+                                            // Saat ini, kita biarkan downloadInProgress = false agar bisa zoom/geser lagi setelah unduh
+      }, 500); // Penundaan kecil untuk memastikan browser memproses unduhan
     }
+
+    async function shareResult() {
+      if (!imageLoaded.value) return;
+
+      const dataUrl = canvas.value.toDataURL("image/png");
+      
+      // Jika browser mendukung Web Share API
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], 'twibbon-hasil.png', { type: 'image/png' });
+          await navigator.share({
+            files: [file],
+            title: 'Twibbon Keren!',
+            text: 'Lihat twibbon keren yang kubuat!',
+          });
+          console.log('Konten berhasil dibagikan');
+        } catch (error) {
+          console.error('Gagal membagikan:', error);
+          alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
+        }
+      } else {
+        // Fallback jika Web Share API tidak didukung atau diblokir
+        alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
+        // Atau Anda bisa arahkan ke downloadResult() lagi
+        // downloadResult();
+      }
+    }
+
 
     // === Gesture dan Zoom ===
     function onPointerDown(e) {
@@ -294,7 +346,7 @@ export default {
         if (!imageLoaded.value || downloadInProgress.value) return;
         e.preventDefault();
         isInteracting.value = true;
-        drawCanvas(); // Panggil segera untuk tampilkan garis & transparan twibbon
+        drawCanvas();
         scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
         scale.value = Math.min(Math.max(scale.value, 0.5), 3);
         drawCanvas();
@@ -310,7 +362,7 @@ export default {
       onFile,
       triggerUpload,
       triggerUploadIfNoImage,
-      download,
+      handleDownloadOrShare, // <-- Fungsi baru
       canvas,
       imageLoaded,
       fileInput,
@@ -319,6 +371,7 @@ export default {
       onDragLeave,
       onDrop,
       downloadInProgress,
+      downloadCompleted, // <-- State baru
     };
   },
 };
