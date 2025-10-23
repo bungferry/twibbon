@@ -3,8 +3,6 @@
     <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
       <div class="controls">
-        <!-- Tombol upload di sini tidak lagi diperlukan jika drop area di canvas -->
-        <!-- <button class="btn" @click="triggerUpload">Upload</button> -->
         <input
           ref="fileInput"
           type="file"
@@ -12,7 +10,7 @@
           @change="onFile"
           style="display: none"
         />
-        <button class="btn" @click="download" :disabled="!imageLoaded">Unduh</button>
+        <button class="btn" @click="download" :disabled="!imageLoaded || downloadInProgress">Unduh</button>
       </div>
     </div>
 
@@ -55,6 +53,7 @@ export default {
     const twibbon = new Image();
     const fileInput = ref(null);
     const isDragOver = ref(false); // State untuk efek hover drop area
+    const downloadInProgress = ref(false); // State baru untuk menonaktifkan interaksi
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -89,12 +88,6 @@ export default {
         const x = cw / 2 - nw / 2 + offsetX.value;
         const y = ch / 2 - nh / 2 + offsetY.value;
         ctx.value.drawImage(userImage.value, x, y, nw, nh);
-      } else {
-        // Placeholder teks saat belum ada gambar tidak lagi diperlukan karena ada drop area
-        // ctx.value.fillStyle = "#aaa";
-        // ctx.value.font = `${Math.floor(cw / 25)}px 'Segoe UI', sans-serif`;
-        // ctx.value.textAlign = "center";
-        // ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
       }
 
       if (twibbon.complete) {
@@ -131,14 +124,14 @@ export default {
     }
 
     function triggerUploadIfNoImage() {
-      if (!imageLoaded.value) {
+      if (!imageLoaded.value && !downloadInProgress.value) { // Tambahkan kondisi
         triggerUpload();
       }
     }
 
     // === Drop Area Handlers ===
     function onDragOver() {
-      if (!imageLoaded.value) {
+      if (!imageLoaded.value && !downloadInProgress.value) { // Tambahkan kondisi
         isDragOver.value = true;
       }
     }
@@ -149,12 +142,16 @@ export default {
 
     function onDrop(e) {
       isDragOver.value = false;
-      if (!imageLoaded.value && e.dataTransfer.files.length > 0) {
+      if (!imageLoaded.value && !downloadInProgress.value && e.dataTransfer.files.length > 0) { // Tambahkan kondisi
         loadImageFromFile(e.dataTransfer.files[0]);
       }
     }
 
     function download() {
+      if (!imageLoaded.value || downloadInProgress.value) return; // Prevent multiple downloads or if no image
+
+      downloadInProgress.value = true; // Set download in progress to disable interactions
+
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
       const now = new Date();
@@ -165,12 +162,17 @@ export default {
       link.download = `${hostname}-${day}-${month}-${year}.png`;
       link.href = canvas.value.toDataURL("image/png");
       link.click();
+
+      // Anda bisa menambahkan logika untuk reset downloadInProgress.value ke false
+      // setelah proses unduhan selesai jika Anda ingin interaksi diaktifkan kembali
+      // tanpa reload. Namun, karena permintaan Anda adalah "kembali normal saat muat ulang browser",
+      // kita akan biarkan downloadInProgress.value tetap true, yang hanya akan di-reset saat reload.
     }
 
     // === Gesture dan Zoom ===
     function onPointerDown(e) {
-      // Hanya izinkan interaksi jika gambar sudah diunggah
-      if (!imageLoaded.value) return;
+      // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
+      if (!imageLoaded.value || downloadInProgress.value) return;
 
       if (e.touches && e.touches.length === 2) {
         lastDistance = getDistance(e.touches);
@@ -182,8 +184,8 @@ export default {
     }
 
     function onPointerMove(e) {
-      // Hanya izinkan interaksi jika gambar sudah diunggah
-      if (!imageLoaded.value) return;
+      // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
+      if (!imageLoaded.value || downloadInProgress.value) return;
 
       if (e.touches && e.touches.length === 2) {
         const newDistance = getDistance(e.touches);
@@ -206,8 +208,8 @@ export default {
     }
 
     function onPointerUp() {
-      // Hanya izinkan interaksi jika gambar sudah diunggah
-      if (!imageLoaded.value) return;
+      // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
+      if (!imageLoaded.value || downloadInProgress.value) return;
 
       isDragging.value = false;
       lastDistance = null;
@@ -236,8 +238,8 @@ export default {
       c.addEventListener("touchmove", onPointerMove);
       c.addEventListener("touchend", onPointerUp);
       c.addEventListener("wheel", (e) => {
-        // Hanya izinkan interaksi jika gambar sudah diunggah
-        if (!imageLoaded.value) return;
+        // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
+        if (!imageLoaded.value || downloadInProgress.value) return;
         e.preventDefault();
         scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
         scale.value = Math.min(Math.max(scale.value, 0.5), 3);
@@ -253,10 +255,11 @@ export default {
       canvas,
       imageLoaded,
       fileInput,
+      isDragOver,
       onDragOver,
       onDragLeave,
       onDrop,
-      isDragOver,
+      downloadInProgress, // Export the new state
     };
   },
 };
