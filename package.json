@@ -10,7 +10,7 @@
   "dependencies": {
     "vue": "^3.3.0",
     "chart.js": "^4.4.3",
-    "@supabase/supabase-js": "^2.43.5"  // 🌟 BARU: Supabase client
+    "@supabase/supabase-js": "^2.43.5"
   },
   "devDependencies": {
     "vite": "^5.0.0",
