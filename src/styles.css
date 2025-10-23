@@ -49,3 +49,43 @@ small{color:#666}
 .drop-area-text {
   margin-bottom: 10px;
   }
+
+/* ... CSS Anda yang sudah ada ... */
+
+.download-share-btn {
+  position: absolute;
+  bottom: 15px; /* Sesuaikan jarak dari bawah */
+  right: 15px; /* Sesuaikan jarak dari kanan */
+  z-index: 20; /* Pastikan di atas canvas dan drop-area */
+  background: rgba(0, 0, 0, 0.6); /* Background transparan hitam */
+  color: white;
+  border: none;
+  border-radius: 50%; /* Membuat tombol bulat */
+  width: 45px; /* Ukuran tombol */
+  height: 45px; /* Ukuran tombol */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.3em; /* Ukuran ikon Font Awesome */
+  transition: background 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.download-share-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+}
+
+.download-share-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.download-share-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Jika Anda ingin Font Awesome terlihat */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');
