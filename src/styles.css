@@ -59,7 +59,7 @@ small{color:#666}
   bottom: 15px; /* Sesuaikan jarak dari bawah */
   right: 15px; /* Sesuaikan jarak dari kanan */
   z-index: 20; /* Pastikan di atas canvas dan drop-area */
-  background: rgba(0, 0, 0, 0.6); /* Background transparan hitam */
+/*  background: rgba(0, 0, 0, 0.6);  Background transparan hitam */
   color: white;
   border: none;
   border-radius: 50%; /* Membuat tombol bulat */
