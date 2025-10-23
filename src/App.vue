@@ -54,7 +54,7 @@ export default {
     const fileInput = ref(null);
     const isDragOver = ref(false);
     const downloadInProgress = ref(false);
-    const isInteracting = ref(false); // <--- State baru: Untuk mengetahui apakah user sedang geser/zoom
+    const isInteracting = ref(false);
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -91,11 +91,31 @@ export default {
         ctx.value.drawImage(userImage.value, x, y, nw, nh);
       }
 
+      // <--- Logika baru: Gambar garis titik pusat jika sedang berinteraksi
+      if (isInteracting.value && imageLoaded.value && !downloadInProgress.value) {
+        ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)"; // Warna garis
+        ctx.value.lineWidth = 1;
+        ctx.value.setLineDash([5, 5]); // Garis putus-putus
+
+        // Garis Horizontal
+        ctx.value.beginPath();
+        ctx.value.moveTo(0, ch / 2);
+        ctx.value.lineTo(cw, ch / 2);
+        ctx.value.stroke();
+
+        // Garis Vertikal
+        ctx.value.beginPath();
+        ctx.value.moveTo(cw / 2, 0);
+        ctx.value.lineTo(cw / 2, ch);
+        ctx.value.stroke();
+
+        ctx.value.setLineDash([]); // Kembalikan ke garis solid
+      }
+
       if (twibbon.complete) {
-        // <--- Logika baru: Atur opasitas twibbon berdasarkan isInteracting
-        ctx.value.globalAlpha = isInteracting.value ? 0.5 : 1; // 0.5 untuk transparan, 1 untuk normal
+        ctx.value.globalAlpha = isInteracting.value ? 0.5 : 1;
         ctx.value.drawImage(twibbon, 0, 0, cw, ch);
-        ctx.value.globalAlpha = 1; // Kembalikan ke 1 agar gambar user tidak ikut transparan
+        ctx.value.globalAlpha = 1;
       }
     }
 
@@ -171,8 +191,7 @@ export default {
     function onPointerDown(e) {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
-      isInteracting.value = true; // <--- Set true saat interaksi dimulai
-
+      isInteracting.value = true;
       if (e.touches && e.touches.length === 2) {
         lastDistance = getDistance(e.touches);
       } else {
@@ -180,7 +199,7 @@ export default {
         lastX.value = e.clientX || e.touches[0].clientX;
         lastY.value = e.clientY || e.touches[0].clientY;
       }
-      drawCanvas(); // Panggil ulang untuk mengaplikasikan transparansi segera
+      drawCanvas();
     }
 
     function onPointerMove(e) {
@@ -211,8 +230,8 @@ export default {
 
       isDragging.value = false;
       lastDistance = null;
-      isInteracting.value = false; // <--- Set false saat interaksi selesai
-      drawCanvas(); // Panggil ulang untuk mengembalikan opasitas normal
+      isInteracting.value = false;
+      drawCanvas();
     }
 
     function getDistance(touches) {
@@ -233,25 +252,23 @@ export default {
       c.addEventListener("mousedown", onPointerDown);
       c.addEventListener("mousemove", onPointerMove);
       c.addEventListener("mouseup", onPointerUp);
-      c.addEventListener("mouseleave", onPointerUp); // Penting untuk mengembalikan opasitas jika mouse keluar saat dragging
+      c.addEventListener("mouseleave", onPointerUp);
       c.addEventListener("touchstart", onPointerDown);
       c.addEventListener("touchmove", onPointerMove);
       c.addEventListener("touchend", onPointerUp);
       c.addEventListener("wheel", (e) => {
         if (!imageLoaded.value || downloadInProgress.value) return;
         e.preventDefault();
-        isInteracting.value = true; // <--- Set true saat scroll dimulai
-        drawCanvas(); // Panggil ulang untuk mengaplikasikan transparansi segera
+        isInteracting.value = true;
+        drawCanvas(); // Panggil segera untuk tampilkan garis & transparan twibbon
         scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
         scale.value = Math.min(Math.max(scale.value, 0.5), 3);
         drawCanvas();
-        // Untuk event wheel, kita perlu sedikit delay untuk mengembalikan opasitas
-        // karena tidak ada event "wheelend".
         clearTimeout(c.wheelTimeout);
         c.wheelTimeout = setTimeout(() => {
           isInteracting.value = false;
           drawCanvas();
-        }, 150); // Sesuaikan delay ini jika diperlukan
+        }, 150);
       });
     });
 
