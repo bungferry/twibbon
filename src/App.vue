@@ -1,57 +1,3 @@
-<template>
-  <div class="app">
-    <div class="header">
-      <h2>Twibbon Editor (Vite + Vue)</h2>
-      <div class="controls">
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          @change="onFile"
-          style="display: none"
-        />
-        <!-- Tombol Unduh/Bagikan sekarang ada di dalam canvas-wrap -->
-      </div>
-    </div>
-
-    <div
-      class="canvas-wrap"
-      @dragover.prevent="onDragOver"
-      @dragleave="onDragLeave"
-      @drop.prevent="onDrop"
-      @click="triggerUploadIfNoImage"
-    >
-      <canvas ref="canvas" class="canvas"></canvas>
-
-      <div
-        v-if="!imageLoaded"
-        :class="['drop-area', { hover: isDragOver }]"
-      >
-        <div class="drop-area-text">Seret & lepas gambar di sini</div>
-        <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
-      </div>
-
-      <!-- Tombol Unduh/Bagikan -->
-      <button
-        v-if="imageLoaded"
-        class="download-share-btn"
-        @click="handleDownloadOrShare"
-        :disabled="downloadInProgress"
-        :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
-      >
-        <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
-      </button>
-
-    </div>
-
-    <div class="toolbar">
-      <small class="info">
-        Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
-      </small>
-    </div>
-  </div>
-</template>
-
 <script>
 import { ref, onMounted } from "vue";
 
@@ -65,9 +11,9 @@ export default {
     const twibbon = new Image();
     const fileInput = ref(null);
     const isDragOver = ref(false);
-    const downloadInProgress = ref(false);
+    const downloadInProgress = ref(false); // Ini akan tetap TRUE setelah unduhan pertama
     const isInteracting = ref(false);
-    const downloadCompleted = ref(false); // <--- State baru: Untuk melacak apakah unduhan sudah selesai
+    const downloadCompleted = ref(false); // Ini akan jadi TRUE setelah unduhan pertama selesai
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -171,6 +117,7 @@ export default {
           offsetY.value = 0;
           scale.value = 1;
           downloadCompleted.value = false; // Reset status unduhan saat gambar baru diunggah
+          downloadInProgress.value = false; // Reset ini juga, agar bisa edit lagi setelah upload baru
           drawCanvas();
         };
         img.src = ev.target.result;
@@ -210,9 +157,8 @@ export default {
       }
     }
 
-    // <--- Fungsi baru untuk handle Unduh atau Bagikan
     function handleDownloadOrShare() {
-      if (!imageLoaded.value || downloadInProgress.value) return;
+      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress di sini, karena tombolnya sudah disabled
 
       if (downloadCompleted.value) {
         shareResult();
@@ -222,7 +168,10 @@ export default {
     }
 
     function downloadResult() {
-      downloadInProgress.value = true; // Set download in progress to disable interactions
+      // <--- Perbaikan di sini
+      downloadInProgress.value = true; // Set ini ke TRUE, dan biarkan tetap TRUE
+      isInteracting.value = false; // Pastikan interaksi disetel false, agar twibbon kembali solid dan garis hilang
+      drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
 
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
@@ -235,21 +184,22 @@ export default {
       link.href = canvas.value.toDataURL("image/png");
       link.click();
 
-      // Setelah beberapa saat (untuk memastikan unduhan dimulai), ubah status
+      // <--- Setelah unduhan dipicu, set downloadCompleted ke TRUE
+      // downloadInProgress.value tetap TRUE agar tidak bisa geser/zoom lagi.
       setTimeout(() => {
-        downloadCompleted.value = true; // Indikasi unduhan selesai, tombol ganti jadi bagikan
-        downloadInProgress.value = false; // Interaksi bisa diaktifkan kembali jika Anda mau
-                                            // Atau tetap biarkan downloadInProgress=true untuk menonaktifkan geser/zoom
-                                            // Saat ini, kita biarkan downloadInProgress = false agar bisa zoom/geser lagi setelah unduh
-      }, 500); // Penundaan kecil untuk memastikan browser memproses unduhan
+        downloadCompleted.value = true;
+      }, 500); // Beri sedikit waktu untuk browser memproses unduhan
     }
 
     async function shareResult() {
-      if (!imageLoaded.value) return;
+      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress, karena sudah dinonaktifkan
 
       const dataUrl = canvas.value.toDataURL("image/png");
-      
-      // Jika browser mendukung Web Share API
+
+      // Perlu diingat, Web Share API mungkin gagal jika dipanggil dari iframe
+      // atau jika tidak ada interaksi pengguna yang langsung mendahuluinya.
+      // Di sini, asumsinya ada interaksi (klik tombol).
+
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
         try {
           const blob = await (await fetch(dataUrl)).blob();
@@ -265,15 +215,13 @@ export default {
           alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
         }
       } else {
-        // Fallback jika Web Share API tidak didukung atau diblokir
         alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
-        // Atau Anda bisa arahkan ke downloadResult() lagi
-        // downloadResult();
       }
     }
 
-
     // === Gesture dan Zoom ===
+    // Fungsi-fungsi ini sudah memiliki kondisi `!downloadInProgress.value`,
+    // jadi tidak ada perubahan di sini.
     function onPointerDown(e) {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
@@ -362,7 +310,7 @@ export default {
       onFile,
       triggerUpload,
       triggerUploadIfNoImage,
-      handleDownloadOrShare, // <-- Fungsi baru
+      handleDownloadOrShare,
       canvas,
       imageLoaded,
       fileInput,
@@ -371,7 +319,7 @@ export default {
       onDragLeave,
       onDrop,
       downloadInProgress,
-      downloadCompleted, // <-- State baru
+      downloadCompleted,
     };
   },
 };
