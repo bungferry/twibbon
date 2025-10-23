@@ -66,9 +66,10 @@ export default {
     const twibbon = new Image();
     const fileInput = ref(null);
     const isDragOver = ref(false);
-    const downloadInProgress = ref(false); // Ini akan tetap TRUE setelah unduhan pertama
+    // Variabel ini HARUS direset ke FALSE agar tombol tidak disabled setelah operasi selesai.
+    const downloadInProgress = ref(false); 
     const isInteracting = ref(false);
-    const downloadCompleted = ref(false); // Ini akan jadi TRUE setelah unduhan pertama selesai
+    const downloadCompleted = ref(false); // TRUE setelah unduhan pertama selesai
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -213,7 +214,7 @@ export default {
     }
 
     function handleDownloadOrShare() {
-      if (!imageLoaded.value) return;
+      if (!imageLoaded.value) return; 
 
       if (downloadCompleted.value) {
         shareResult();
@@ -224,8 +225,8 @@ export default {
 
     function downloadResult() {
       downloadInProgress.value = true; 
-      isInteracting.value = false; // PASTIKAN TWIBBON SOLID SEBELUM UNDUH
-      drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
+      isInteracting.value = false; 
+      drawCanvas(); 
 
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
@@ -240,31 +241,28 @@ export default {
 
       setTimeout(() => {
         downloadCompleted.value = true;
+        // 🌟 PERBAIKAN: Reset downloadInProgress agar tombol tidak disabled lagi!
+        downloadInProgress.value = false; 
+        drawCanvas();
       }, 500);
     }
 
-    // ==========================================================
-    // PERBAIKAN FUNGSI SHARE RESULT
-    // ==========================================================
     async function shareResult() {
-      if (!imageLoaded.value) return;
+      if (!imageLoaded.value) return; 
 
-      // PASTIKAN TWIBBON SOLID SEBELUM SHARE
+      // Aktifkan loading untuk mencegah double click/interaksi lain saat proses share
+      downloadInProgress.value = true; 
       isInteracting.value = false;
-      drawCanvas(); 
+      drawCanvas();
       
       const dataUrl = canvas.value.toDataURL("image/png");
 
       if (navigator.share) {
         try {
-          // 1. Dapatkan Blob dari dataURL
           const response = await fetch(dataUrl);
           const blob = await response.blob();
-          
-          // 2. Buat objek File
           const file = new File([blob], 'twibbon-hasil.png', { type: 'image/png' });
 
-          // 3. Coba share file (API modern)
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
              await navigator.share({
                 files: [file],
@@ -273,11 +271,11 @@ export default {
              });
              console.log('Konten berhasil dibagikan sebagai file.');
           } else {
-             // 4. Fallback: Jika tidak bisa share file, coba share teks dan URL saja.
+             // Fallback: Share link/text
              const shareData = {
                 title: 'Twibbon Keren!',
                 text: 'Lihat twibbon keren yang kubuat!',
-                url: window.location.href // Bagikan URL halaman saat ini
+                url: window.location.href 
              };
 
              if (navigator.canShare(shareData)) {
@@ -290,21 +288,23 @@ export default {
           }
 
         } catch (error) {
-          // Tangani AbortError (jika pengguna membatalkan) dan kesalahan lainnya
-          if (error.name === 'AbortError') {
-             console.log('Pembagian dibatalkan oleh pengguna.');
-          } else {
+          if (error.name !== 'AbortError') { 
              console.error('Gagal membagikan:', error);
-             alert('Gagal membagikan gambar. Silakan unduh gambar secara manual. Kesalahan: ' + error.message);
+             alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
           }
+        } finally {
+          // 🌟 PERBAIKAN: Reset downloadInProgress setelah operasi share selesai (berhasil/gagal/dibatalkan)
+          downloadInProgress.value = false; 
+          drawCanvas();
         }
       } else {
         alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
+        // Jika tidak didukung, pastikan tetap di-reset
+        downloadInProgress.value = false; 
       }
     }
-    // ==========================================================
-    
-    // === Gesture dan Zoom (TIDAK ADA PERUBAHAN DI SINI) ===
+
+    // === Gesture dan Zoom (Tidak ada perubahan) ===
     function onPointerDown(e) {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
