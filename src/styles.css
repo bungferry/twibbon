@@ -53,32 +53,47 @@ small{color:#666}
   }
 
 .download-share-btn {
-  /* ... (Properti dasar lainnya tetap sama) ... */
-  font-size: 1.2em; 
-  padding: 5px; 
+  position: absolute;
+  bottom: 15px; /* Sesuaikan jarak dari bawah */
+  right: 15px; /* Sesuaikan jarak dari kanan */
+  z-index: 20; /* Pastikan di atas canvas dan drop-area */
+  
+  /* --- PERUBAHAN UTAMA: Hapus Background dan Dimensi --- */
+  background: none; /* Menghilangkan background */
+  border: none; /* Menghilangkan border */
+  border-radius: 0; /* Menghilangkan border-radius */
+  width: auto; /* Sesuaikan lebar dengan konten */
+  height: auto; /* Sesuaikan tinggi dengan konten */
+  box-shadow: none; /* Menghilangkan bayangan */
+  /* --- AKHIR PERUBAHAN UTAMA --- */
+
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.8em; /* Ukuran ikon Font Awesome (ditingkatkan agar mudah diklik) */
+  padding: 5px; /* Tambahkan sedikit padding agar area klik lebih nyaman */
   transition: color 0.3s ease, transform 0.2s ease;
+  
+  /* Opsional: Tambahkan sedikit bayangan teks agar ikon menonjol di atas gambar */
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); 
-  color: white; /* Warna default */
-  position: absolute; /* Sekarang relatif terhadap .canvas-container */ 
-  bottom: 15px; 
-  right: 15px;
 }
 
-/* 1. Efek HOVER umum untuk tombol yang TIDAK disabled */
 .download-share-btn:hover:not(:disabled) {
-  color: #ffcc00; /* Warna aktif saat hover */
-  transform: scale(1.1); 
+  /* Ubah hanya warna ikon saat hover */
+  color: #ffcc00; /* Contoh warna kuning/emas saat hover */
+  background: none; /* Pastikan background tetap hilang */
+  transform: scale(1.1); /* Sedikit efek zoom saat hover */
+  box-shadow: none;
 }
 
-/* 2. Tombol saat SEDANG dalam PROSES (disabled) */
+.download-share-btn:active:not(:disabled) {
+  transform: scale(1.0);
+  box-shadow: none;
+}
+
 .download-share-btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-  color: white; /* Jaga warna tetap putih saat disabled (agar tidak mengganggu) */
-  transform: none; /* Hilangkan efek scale saat disabled */
-}
-
-/* 3. Perbaikan Khusus: Pastikan Tombol "Bagikan" yang disabled (saat loading) tidak memiliki hover */
-.download-share-btn:disabled:hover {
-  color: white; /* Cegah perubahan warna saat disabled meskipun dihover */
 }
