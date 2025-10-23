@@ -124,7 +124,8 @@ export default {
           // offsetY.value += (ch / 2) - imageCenterY;
         }
 
-        ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)";
+     //   ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)"; // Warna putih dengan opasitas 60%
         ctx.value.lineWidth = 1;
         ctx.value.setLineDash([5, 5]);
 
