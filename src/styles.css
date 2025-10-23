@@ -54,7 +54,7 @@ small{color:#666}
 
 .download-share-btn {
   /* ... (Properti dasar lainnya tetap sama) ... */
-  font-size: 1.8em; 
+  font-size: 1.2em; 
   padding: 5px; 
   transition: color 0.3s ease, transform 0.2s ease;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); 
