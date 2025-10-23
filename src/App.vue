@@ -15,7 +15,13 @@
                 <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
             </div>
 
-            <button v-if="imageLoaded" class="download-share-btn" @click="handleDownloadOrShare" :disabled="downloadInProgress" :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'">
+            <button 
+                v-if="imageLoaded" 
+                class="download-share-btn" 
+                @click="handleDownloadOrShare" 
+                :disabled="downloadInProgress" 
+                :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
+            >
                 <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
             </button>
         </div>
@@ -29,7 +35,7 @@
                 Total Dukungan: 
                 <span class="count-number">{{ supportCount.toLocaleString('id-ID') }}</span> Twibbon
             </p>
-            </div>
+        </div>
     </div>
 </template>
 
@@ -39,7 +45,7 @@
         onMounted
     } from "vue";
     
-    // 🌟 BARU: Impor klien Supabase (Pastikan path dan setup Supabase sudah benar!)
+    // Impor klien Supabase (Pastikan path ke file ini sudah benar!)
     import { supabase } from './lib/supabaseClient'; 
 
     export default {
@@ -69,15 +75,14 @@
 
             const SNAP_THRESHOLD = 10;
             
-            // 🌟 BARU: Variabel untuk menyimpan total dukungan dan ID metrik
-            const TWIBBON_METRIC_ID = 1; 
+            // Variabel untuk menyimpan total dukungan dan ID metrik
+            const TWIBBON_METRIC_ID = 1; // ID baris di tabel 'metrics'
             const supportCount = ref(0); 
             
             // ------------------------------------
-            // 🌟 FUNGSI SUPABASE 🌟
+            // FUNGSI SUPABASE (Pengambilan & Pelacakan Hitungan)
             // ------------------------------------
 
-            // Fungsi untuk mengambil data hitungan dari Supabase saat dimuat
             async function fetchSupportCount() {
               try {
                 const { data, error } = await supabase
@@ -88,7 +93,7 @@
 
                 if (error) {
                   console.error("Gagal mengambil total dukungan:", error.message);
-                  // Jika error 40400 (no row), set ke 0
+                  // Jika tidak ada row, inisialisasi count ke 0
                   if (error.code === 'PGRST116') {
                      supportCount.value = 0;
                   }
@@ -102,7 +107,6 @@
               }
             }
 
-            // Fungsi untuk memanggil RPC Supabase dan mengupdate tampilan
             async function trackSupport() {
               try {
                 const { error } = await supabase.rpc('increment_twibbon_count', { 
@@ -122,7 +126,7 @@
             }
 
             // ------------------------------------
-            // FUNGSI UTAMA TWIBBON
+            // FUNGSI UTAMA TWIBBON & CANVAS
             // ------------------------------------
 
             function resizeCanvas() {
@@ -281,7 +285,7 @@
                 link.href = canvas.value.toDataURL("image/png");
                 link.click();
                 
-                // 🌟 Panggil fungsi pelacakan
+                // Panggil fungsi pelacakan Supabase
                 trackSupport(); 
 
                 setTimeout(() => {
@@ -351,20 +355,54 @@
                 }
             }
 
-            // === Gesture dan Zoom ===
+            // ------------------------------------
+            // FUNGSI GESTURE DAN ZOOM (Diperbaiki)
+            // ------------------------------------
+
             function onPointerDown(e) {
                 if (!imageLoaded.value || isCanvasLocked.value) return; 
-                // ... (kode geser) ...
+
+                isInteracting.value = true;
+                if (e.touches && e.touches.length === 2) {
+                    lastDistance = getDistance(e.touches);
+                } else {
+                    isDragging.value = true;
+                    lastX.value = e.clientX || e.touches[0].clientX;
+                    lastY.value = e.clientY || e.touches[0].clientY;
+                }
+                drawCanvas();
             }
 
             function onPointerMove(e) {
                 if (!imageLoaded.value || isCanvasLocked.value) return; 
-                // ... (kode geser) ...
+
+                if (e.touches && e.touches.length === 2) {
+                    const newDistance = getDistance(e.touches);
+                    if (lastDistance) {
+                        const delta = newDistance / lastDistance;
+                        scale.value *= delta;
+                        scale.value = Math.min(Math.max(scale.value, 0.5), 3);
+                        drawCanvas();
+                    }
+                    lastDistance = newDistance;
+                } else if (isDragging.value) {
+                    const x = e.clientX || e.touches[0].clientX;
+                    const y = e.clientY || e.touches[0].clientY;
+                    offsetX.value += x - lastX.value;
+                    offsetY.value += y - lastY.value;
+                    lastX.value = x;
+                    lastY.value = y;
+                    drawCanvas();
+                }
             }
 
             function onPointerUp() {
                 if (!imageLoaded.value || isCanvasLocked.value) return; 
-                // ... (kode geser) ...
+
+                isDragging.value = false;
+                lastDistance = null;
+                isInteracting.value = false;
+                drawCanvas();
             }
             
             function getDistance(touches) {
@@ -374,9 +412,12 @@
                 return Math.sqrt(dx * dx + dy * dy);
             }
 
+            // ------------------------------------
+            // HOOK ONMOUNTED
+            // ------------------------------------
 
             onMounted(() => {
-                // 🌟 PANGGIL: Ambil hitungan saat komponen dimuat
+                // Ambil hitungan saat komponen dimuat
                 fetchSupportCount(); 
                 
                 ctx.value = canvas.value.getContext("2d");
@@ -393,6 +434,8 @@
                 c.addEventListener("touchstart", onPointerDown);
                 c.addEventListener("touchmove", onPointerMove);
                 c.addEventListener("touchend", onPointerUp);
+                
+                // Logika wheel/zoom
                 c.addEventListener("wheel", (e) => {
                     if (!imageLoaded.value || isCanvasLocked.value) return; 
                     e.preventDefault();
@@ -423,7 +466,7 @@
                 onDrop,
                 downloadInProgress,
                 downloadCompleted,
-                // 🌟 BARU: Sertakan supportCount di return
+                // Data Supabase
                 supportCount,
             };
         },
