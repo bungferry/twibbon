@@ -82,7 +82,6 @@ small{color:#666}
 
 .download-share-btn:hover:not(:disabled) {
   /* Ubah hanya warna ikon saat hover */
-  color: #ffcc00; /* Contoh warna kuning/emas saat hover */
   background: none; /* Pastikan background tetap hilang */
   transform: scale(1.1); /* Sedikit efek zoom saat hover */
   box-shadow: none;
