@@ -213,7 +213,7 @@ export default {
     }
 
     function handleDownloadOrShare() {
-      if (!imageLoaded.value) return;
+      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress di sini, karena tombolnya sudah disabled
 
       if (downloadCompleted.value) {
         shareResult();
@@ -223,6 +223,7 @@ export default {
     }
 
     function downloadResult() {
+      // <--- Perbaikan di sini
       downloadInProgress.value = true; // Set ini ke TRUE, dan biarkan tetap TRUE
       isInteracting.value = false; // Pastikan interaksi disetel false, agar twibbon kembali solid dan garis hilang
       drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
@@ -238,15 +239,21 @@ export default {
       link.href = canvas.value.toDataURL("image/png");
       link.click();
 
+      // <--- Setelah unduhan dipicu, set downloadCompleted ke TRUE
+      // downloadInProgress.value tetap TRUE agar tidak bisa geser/zoom lagi.
       setTimeout(() => {
         downloadCompleted.value = true;
-      }, 500);
+      }, 500); // Beri sedikit waktu untuk browser memproses unduhan
     }
 
     async function shareResult() {
-      if (!imageLoaded.value) return;
+      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress, karena sudah dinonaktifkan
 
       const dataUrl = canvas.value.toDataURL("image/png");
+
+      // Perlu diingat, Web Share API mungkin gagal jika dipanggil dari iframe
+      // atau jika tidak ada interaksi pengguna yang langsung mendahuluinya.
+      // Di sini, asumsinya ada interaksi (klik tombol).
 
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
         try {
@@ -268,6 +275,8 @@ export default {
     }
 
     // === Gesture dan Zoom ===
+    // Fungsi-fungsi ini sudah memiliki kondisi `!downloadInProgress.value`,
+    // jadi tidak ada perubahan di sini.
     function onPointerDown(e) {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
