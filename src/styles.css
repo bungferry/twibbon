@@ -52,36 +52,45 @@ small{color:#666}
   margin-bottom: 10px;
   }
 
-/* ... CSS Anda yang sudah ada ... */
-
 .download-share-btn {
   position: absolute;
   bottom: 15px; /* Sesuaikan jarak dari bawah */
   right: 15px; /* Sesuaikan jarak dari kanan */
   z-index: 20; /* Pastikan di atas canvas dan drop-area */
-/*  background: rgba(0, 0, 0, 0.6);  Background transparan hitam */
+  
+  /* --- PERUBAHAN UTAMA: Hapus Background dan Dimensi --- */
+  background: none; /* Menghilangkan background */
+  border: none; /* Menghilangkan border */
+  border-radius: 0; /* Menghilangkan border-radius */
+  width: auto; /* Sesuaikan lebar dengan konten */
+  height: auto; /* Sesuaikan tinggi dengan konten */
+  box-shadow: none; /* Menghilangkan bayangan */
+  /* --- AKHIR PERUBAHAN UTAMA --- */
+
   color: white;
-  border: none;
-  border-radius: 50%; /* Membuat tombol bulat */
-  width: 35px; /* Ukuran tombol */
-  height: 35px; /* Ukuran tombol */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.3em; /* Ukuran ikon Font Awesome */
-  transition: background 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  font-size: 1.8em; /* Ukuran ikon Font Awesome (ditingkatkan agar mudah diklik) */
+  padding: 5px; /* Tambahkan sedikit padding agar area klik lebih nyaman */
+  transition: color 0.3s ease, transform 0.2s ease;
+  
+  /* Opsional: Tambahkan sedikit bayangan teks agar ikon menonjol di atas gambar */
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); 
 }
 
 .download-share-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.8);
-  transform: translateY(-2px);
+  /* Ubah hanya warna ikon saat hover */
+  color: #ffcc00; /* Contoh warna kuning/emas saat hover */
+  background: none; /* Pastikan background tetap hilang */
+  transform: scale(1.1); /* Sedikit efek zoom saat hover */
+  box-shadow: none;
 }
 
 .download-share-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transform: scale(1.0);
+  box-shadow: none;
 }
 
 .download-share-btn:disabled {
