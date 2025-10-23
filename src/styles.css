@@ -156,7 +156,6 @@ small {
     opacity: 0.5;
 }
 
-/* --- PERBAIKAN: CSS BARU UNTUK TOTAL DUKUNGAN DI HEADER (Dihilangkan Backgroundnya) --- */
 .support-count-header {
     font-size: 1.05em;
     font-weight: 600;
@@ -164,13 +163,12 @@ small {
     display: flex;
     align-items: center;
     gap: 5px;
-    /* Dihapus: padding dan background-color */
     padding: 0; 
     background-color: transparent; 
 }
 
 .support-count-header i {
-    color: #007bff; /* Warna ikon Font Awesome */
+    color: #007bff; 
 }
 
 .support-count-header .count-number {
