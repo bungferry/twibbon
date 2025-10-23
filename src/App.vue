@@ -4,6 +4,15 @@
             <h2>Twibbon Editor (Vite + Vue)</h2>
             <div class="controls">
                 <input ref="fileInput" type="file" accept="image/*" @change="onFile" style="display: none" />
+                
+                <div class="support-count-header">
+                    <i class="fas fa-user-friends"></i> 
+                    
+                    <span v-if="isLoading">Memuat...</span>
+                    <span v-else class="count-number">
+                        {{ supportCount.toLocaleString('id-ID') }} Dukungan
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -31,15 +40,7 @@
                 Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
             </small>
             
-            <p class="support-count">
-                Total Dukungan: 
-                <span class="count-number">
-                    <span v-if="isLoading">Memuat...</span>
-                    <span v-else>{{ supportCount.toLocaleString('id-ID') }}</span>
-                </span>
-                Twibbon
-            </p>
-        </div>
+            </div>
     </div>
 </template>
 
