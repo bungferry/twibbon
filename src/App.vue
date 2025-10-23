@@ -364,7 +364,7 @@
                             await navigator.share({
                                 files: [file],
                                 title: 'Twibbon Keren!',
-                                url: 'https://pfptwibbon.vercel.app/',
+                                url: 'https://twibbonmu.netlify.app/',
                                 text: 'Lihat twibbon keren yang kubuat!',
                             });
                             trackSupport(); 
@@ -372,7 +372,7 @@
                             const shareData = {
                                 title: 'Twibbon Keren!',
                                 text: 'Lihat twibbon keren yang kubuat!',
-                                url: 'https://pfptwibbon.vercel.app/',
+                                url: 'https://twibbonmu.netlify.app/',
                             };
 
                             if (navigator.canShare(shareData)) {
