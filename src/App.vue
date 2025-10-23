@@ -52,8 +52,9 @@ export default {
     const userImage = ref(null);
     const twibbon = new Image();
     const fileInput = ref(null);
-    const isDragOver = ref(false); // State untuk efek hover drop area
-    const downloadInProgress = ref(false); // State baru untuk menonaktifkan interaksi
+    const isDragOver = ref(false);
+    const downloadInProgress = ref(false);
+    const isInteracting = ref(false); // <--- State baru: Untuk mengetahui apakah user sedang geser/zoom
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -91,7 +92,10 @@ export default {
       }
 
       if (twibbon.complete) {
+        // <--- Logika baru: Atur opasitas twibbon berdasarkan isInteracting
+        ctx.value.globalAlpha = isInteracting.value ? 0.5 : 1; // 0.5 untuk transparan, 1 untuk normal
         ctx.value.drawImage(twibbon, 0, 0, cw, ch);
+        ctx.value.globalAlpha = 1; // Kembalikan ke 1 agar gambar user tidak ikut transparan
       }
     }
 
@@ -124,14 +128,13 @@ export default {
     }
 
     function triggerUploadIfNoImage() {
-      if (!imageLoaded.value && !downloadInProgress.value) { // Tambahkan kondisi
+      if (!imageLoaded.value && !downloadInProgress.value) {
         triggerUpload();
       }
     }
 
-    // === Drop Area Handlers ===
     function onDragOver() {
-      if (!imageLoaded.value && !downloadInProgress.value) { // Tambahkan kondisi
+      if (!imageLoaded.value && !downloadInProgress.value) {
         isDragOver.value = true;
       }
     }
@@ -142,15 +145,15 @@ export default {
 
     function onDrop(e) {
       isDragOver.value = false;
-      if (!imageLoaded.value && !downloadInProgress.value && e.dataTransfer.files.length > 0) { // Tambahkan kondisi
+      if (!imageLoaded.value && !downloadInProgress.value && e.dataTransfer.files.length > 0) {
         loadImageFromFile(e.dataTransfer.files[0]);
       }
     }
 
     function download() {
-      if (!imageLoaded.value || downloadInProgress.value) return; // Prevent multiple downloads or if no image
+      if (!imageLoaded.value || downloadInProgress.value) return;
 
-      downloadInProgress.value = true; // Set download in progress to disable interactions
+      downloadInProgress.value = true;
 
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
@@ -162,17 +165,13 @@ export default {
       link.download = `${hostname}-${day}-${month}-${year}.png`;
       link.href = canvas.value.toDataURL("image/png");
       link.click();
-
-      // Anda bisa menambahkan logika untuk reset downloadInProgress.value ke false
-      // setelah proses unduhan selesai jika Anda ingin interaksi diaktifkan kembali
-      // tanpa reload. Namun, karena permintaan Anda adalah "kembali normal saat muat ulang browser",
-      // kita akan biarkan downloadInProgress.value tetap true, yang hanya akan di-reset saat reload.
     }
 
     // === Gesture dan Zoom ===
     function onPointerDown(e) {
-      // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
       if (!imageLoaded.value || downloadInProgress.value) return;
+
+      isInteracting.value = true; // <--- Set true saat interaksi dimulai
 
       if (e.touches && e.touches.length === 2) {
         lastDistance = getDistance(e.touches);
@@ -181,10 +180,10 @@ export default {
         lastX.value = e.clientX || e.touches[0].clientX;
         lastY.value = e.clientY || e.touches[0].clientY;
       }
+      drawCanvas(); // Panggil ulang untuk mengaplikasikan transparansi segera
     }
 
     function onPointerMove(e) {
-      // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
       if (!imageLoaded.value || downloadInProgress.value) return;
 
       if (e.touches && e.touches.length === 2) {
@@ -208,11 +207,12 @@ export default {
     }
 
     function onPointerUp() {
-      // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
       if (!imageLoaded.value || downloadInProgress.value) return;
 
       isDragging.value = false;
       lastDistance = null;
+      isInteracting.value = false; // <--- Set false saat interaksi selesai
+      drawCanvas(); // Panggil ulang untuk mengembalikan opasitas normal
     }
 
     function getDistance(touches) {
@@ -233,17 +233,25 @@ export default {
       c.addEventListener("mousedown", onPointerDown);
       c.addEventListener("mousemove", onPointerMove);
       c.addEventListener("mouseup", onPointerUp);
-      c.addEventListener("mouseleave", onPointerUp);
+      c.addEventListener("mouseleave", onPointerUp); // Penting untuk mengembalikan opasitas jika mouse keluar saat dragging
       c.addEventListener("touchstart", onPointerDown);
       c.addEventListener("touchmove", onPointerMove);
       c.addEventListener("touchend", onPointerUp);
       c.addEventListener("wheel", (e) => {
-        // Hanya izinkan interaksi jika gambar sudah diunggah DAN tidak sedang dalam proses unduh
         if (!imageLoaded.value || downloadInProgress.value) return;
         e.preventDefault();
+        isInteracting.value = true; // <--- Set true saat scroll dimulai
+        drawCanvas(); // Panggil ulang untuk mengaplikasikan transparansi segera
         scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
         scale.value = Math.min(Math.max(scale.value, 0.5), 3);
         drawCanvas();
+        // Untuk event wheel, kita perlu sedikit delay untuk mengembalikan opasitas
+        // karena tidak ada event "wheelend".
+        clearTimeout(c.wheelTimeout);
+        c.wheelTimeout = setTimeout(() => {
+          isInteracting.value = false;
+          drawCanvas();
+        }, 150); // Sesuaikan delay ini jika diperlukan
       });
     });
 
@@ -259,7 +267,7 @@ export default {
       onDragOver,
       onDragLeave,
       onDrop,
-      downloadInProgress, // Export the new state
+      downloadInProgress,
     };
   },
 };
