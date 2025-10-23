@@ -3,7 +3,8 @@
     <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
       <div class="controls">
-        <button class="btn" @click="triggerUpload">Upload</button>
+        <!-- Tombol upload di sini tidak lagi diperlukan jika drop area di canvas -->
+        <!-- <button class="btn" @click="triggerUpload">Upload</button> -->
         <input
           ref="fileInput"
           type="file"
@@ -15,8 +16,22 @@
       </div>
     </div>
 
-    <div class="canvas-wrap">
+    <div
+      class="canvas-wrap"
+      @dragover.prevent="onDragOver"
+      @dragleave="onDragLeave"
+      @drop.prevent="onDrop"
+      @click="triggerUploadIfNoImage"
+    >
       <canvas ref="canvas" class="canvas"></canvas>
+
+      <div
+        v-if="!imageLoaded"
+        :class="['drop-area', { hover: isDragOver }]"
+      >
+        <div class="drop-area-text">Seret & lepas gambar di sini</div>
+        <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
+      </div>
     </div>
 
     <div class="toolbar">
@@ -39,6 +54,7 @@ export default {
     const userImage = ref(null);
     const twibbon = new Image();
     const fileInput = ref(null);
+    const isDragOver = ref(false); // State untuk efek hover drop area
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -74,11 +90,11 @@ export default {
         const y = ch / 2 - nh / 2 + offsetY.value;
         ctx.value.drawImage(userImage.value, x, y, nw, nh);
       } else {
-        // === Placeholder teks saat belum ada gambar ===
-        ctx.value.fillStyle = "#aaa";
-        ctx.value.font = `${Math.floor(cw / 25)}px 'Segoe UI', sans-serif`;
-        ctx.value.textAlign = "center";
-        ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
+        // Placeholder teks saat belum ada gambar tidak lagi diperlukan karena ada drop area
+        // ctx.value.fillStyle = "#aaa";
+        // ctx.value.font = `${Math.floor(cw / 25)}px 'Segoe UI', sans-serif`;
+        // ctx.value.textAlign = "center";
+        // ctx.value.fillText("Unggah foto untuk mulai membuat twibbon", cw / 2, ch / 2);
       }
 
       if (twibbon.complete) {
@@ -86,9 +102,9 @@ export default {
       }
     }
 
-    function onFile(e) {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
+    function loadImageFromFile(file) {
+      if (!file || !file.type.startsWith("image/")) return;
+
       const reader = new FileReader();
       reader.onload = (ev) => {
         const img = new Image();
@@ -105,25 +121,57 @@ export default {
       reader.readAsDataURL(file);
     }
 
+    function onFile(e) {
+      const file = e.target.files && e.target.files[0];
+      loadImageFromFile(file);
+    }
+
     function triggerUpload() {
       fileInput.value && fileInput.value.click();
     }
 
+    function triggerUploadIfNoImage() {
+      if (!imageLoaded.value) {
+        triggerUpload();
+      }
+    }
+
+    // === Drop Area Handlers ===
+    function onDragOver() {
+      if (!imageLoaded.value) {
+        isDragOver.value = true;
+      }
+    }
+
+    function onDragLeave() {
+      isDragOver.value = false;
+    }
+
+    function onDrop(e) {
+      isDragOver.value = false;
+      if (!imageLoaded.value && e.dataTransfer.files.length > 0) {
+        loadImageFromFile(e.dataTransfer.files[0]);
+      }
+    }
+
     function download() {
       const link = document.createElement("a");
-      const hostname = window.location.hostname.replace(/^www\./, ""); 
+      const hostname = window.location.hostname.replace(/^www\./, "");
       const now = new Date();
       const day = String(now.getDate()).padStart(2, "0");
       const month = String(now.getMonth() + 1).padStart(2, "0");
       const year = now.getFullYear();
-      
-      link.download = `${hostname}-${day}-${month}-${year}.png`; 
+
+      link.download = `${hostname}-${day}-${month}-${year}.png`;
       link.href = canvas.value.toDataURL("image/png");
       link.click();
     }
 
     // === Gesture dan Zoom ===
     function onPointerDown(e) {
+      // Hanya izinkan interaksi jika gambar sudah diunggah
+      if (!imageLoaded.value) return;
+
       if (e.touches && e.touches.length === 2) {
         lastDistance = getDistance(e.touches);
       } else {
@@ -134,6 +182,9 @@ export default {
     }
 
     function onPointerMove(e) {
+      // Hanya izinkan interaksi jika gambar sudah diunggah
+      if (!imageLoaded.value) return;
+
       if (e.touches && e.touches.length === 2) {
         const newDistance = getDistance(e.touches);
         if (lastDistance) {
@@ -155,6 +206,9 @@ export default {
     }
 
     function onPointerUp() {
+      // Hanya izinkan interaksi jika gambar sudah diunggah
+      if (!imageLoaded.value) return;
+
       isDragging.value = false;
       lastDistance = null;
     }
@@ -182,6 +236,8 @@ export default {
       c.addEventListener("touchmove", onPointerMove);
       c.addEventListener("touchend", onPointerUp);
       c.addEventListener("wheel", (e) => {
+        // Hanya izinkan interaksi jika gambar sudah diunggah
+        if (!imageLoaded.value) return;
         e.preventDefault();
         scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
         scale.value = Math.min(Math.max(scale.value, 0.5), 3);
@@ -189,7 +245,19 @@ export default {
       });
     });
 
-    return { onFile, triggerUpload, download, canvas, imageLoaded, fileInput };
+    return {
+      onFile,
+      triggerUpload,
+      triggerUploadIfNoImage,
+      download,
+      canvas,
+      imageLoaded,
+      fileInput,
+      onDragOver,
+      onDragLeave,
+      onDrop,
+      isDragOver,
+    };
   },
 };
 </script>
