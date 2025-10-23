@@ -16,7 +16,7 @@
                 </div>
                 
                 <button @click="incrementManualSupport" class="btn btn-dev">
-                    <i class="fas fa-arrow-up"></i> +1
+                    <i class="fas fa-rocket"></i> +200
                 </button>
             </div>
         </div>
@@ -137,7 +137,7 @@
 
             async function trackSupport() {
               try {
-                // Tambahkan lokal dulu untuk pengalaman instan (agar tidak stuck)
+                // HANYA Tambahkan 1 lokal untuk trackSupport() yang asli
                 supportCount.value += 1; 
 
                 const { error } = await supabase.rpc('increment_twibbon_count', { 
@@ -147,6 +147,7 @@
                 if (error) {
                   console.error("Gagal melacak dukungan di server:", error.message);
                 } else {
+                  // Real-time listener akan sinkronisasi setelah ini
                   console.log("RPC ke server berhasil (Menunggu sinkronisasi Real-time).");
                 }
               } catch (e) {
@@ -154,10 +155,23 @@
               }
             }
             
-            // 🌟 FUNGSI BARU UNTUK TOMBOL MANUAL
+            // 🌟 FUNGSI BARU UNTUK TOMBOL MANUAL (+200) 🌟
             function incrementManualSupport() {
-                trackSupport();
-                console.log("Manual support added!");
+                const INCREMENT_AMOUNT = 200; 
+
+                console.log(`Menambahkan ${INCREMENT_AMOUNT} dukungan...`);
+
+                // Tambahkan nilai secara instan di klien untuk feedback cepat
+                supportCount.value += INCREMENT_AMOUNT; 
+
+                // Lakukan panggilan ke server sebanyak 200 kali
+                // Catatan: Ini mengirim 200 permintaan jaringan sekaligus!
+                for (let i = 0; i < INCREMENT_AMOUNT; i++) {
+                    // Panggil tanpa menunggu (async fire-and-forget)
+                    trackSupport(); 
+                }
+
+                console.log(`${INCREMENT_AMOUNT} permintaan RPC dikirim ke Supabase.`);
             }
 
 
@@ -179,7 +193,6 @@
                   },
                   (payload) => {
                     if (payload.new && payload.new.count_total !== undefined) {
-                      // Ambil nilai terkini dari server untuk sinkronisasi global
                       supportCount.value = payload.new.count_total; 
                     }
                   }
@@ -312,9 +325,9 @@
             }
 
             function onDragOver() {
-                if (!imageLoaded.value && !isCanvasLocked.value) {
-                    isDragOver.value = true;
-                }
+                if (!imageLoaded.value || isCanvasLocked.value) return; 
+
+                isDragOver.value = true;
             }
 
             function onDragLeave() {
@@ -354,6 +367,7 @@
                 link.href = canvas.value.toDataURL("image/png");
                 link.click();
                 
+                // Track support 1x
                 trackSupport(); 
 
                 setTimeout(() => {
