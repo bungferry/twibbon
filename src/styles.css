@@ -155,3 +155,26 @@ small {
     cursor: not-allowed;
     opacity: 0.5;
 }
+
+/* --- PERBAIKAN: CSS BARU UNTUK TOTAL DUKUNGAN DI HEADER --- */
+.support-count-header {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    /* Warna latar belakang di header (fdfdff) */
+    background-color: #e6e6e9; 
+}
+
+.support-count-header i {
+    color: #007bff; /* Warna ikon Font Awesome */
+}
+
+.support-count-header .count-number {
+    font-weight: 700;
+    color: #111;
+}
