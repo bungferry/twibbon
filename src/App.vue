@@ -16,7 +16,7 @@
                 </div>
                 
                 <button @click="incrementManualSupport" class="btn btn-dev">
-                    <i class="fas fa-rocket"></i> +1000
+                    <i class="fas fa-rocket"></i> +20000
                 </button>
             </div>
         </div>
@@ -157,7 +157,7 @@
             
             // 🌟 FUNGSI BARU UNTUK TOMBOL MANUAL (+200) 🌟
             function incrementManualSupport() {
-                const INCREMENT_AMOUNT = 1000; 
+                const INCREMENT_AMOUNT = 20000; 
 
                 console.log(`Menambahkan ${INCREMENT_AMOUNT} dukungan...`);
 
