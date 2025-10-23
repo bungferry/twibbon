@@ -59,6 +59,9 @@ small{color:#666}
   transition: color 0.3s ease, transform 0.2s ease;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); 
   color: white; /* Warna default */
+  position: absolute; /* Sekarang relatif terhadap .canvas-container */ 
+  bottom: 15px; 
+  right: 15px;
 }
 
 /* 1. Efek HOVER umum untuk tombol yang TIDAK disabled */
