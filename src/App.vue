@@ -364,6 +364,7 @@
                             await navigator.share({
                                 files: [file],
                                 title: 'Twibbon Keren!',
+                                url: 'https://pfptwibbon.vercel.app/',
                                 text: 'Lihat twibbon keren yang kubuat!',
                             });
                             trackSupport(); 
@@ -371,7 +372,7 @@
                             const shareData = {
                                 title: 'Twibbon Keren!',
                                 text: 'Lihat twibbon keren yang kubuat!',
-                                url: window.location.href
+                                url: 'https://pfptwibbon.vercel.app/',
                             };
 
                             if (navigator.canShare(shareData)) {
