@@ -1,98 +1,179 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');
 
-*{box-sizing:border-box}
-html,body,#app{background:#f0f0f2;height:100%;margin:0;padding:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
-.app{background:#fdfdff;width:600px;margin:5em auto;padding:2em}
-.header{display:flex;gap:12px;align-items:center;justify-content:space-between}
-.controls{display:flex;gap:8px;align-items:center}
-.canvas-wrap{width:100%;aspect-ratio:1/1;background:#f3f4f6;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.canvas-wrap canvas{touch-action:none}
-.btn{padding:8px 12px;border-radius:8px;border:none;background:#111;color:#fff;cursor:pointer}
-.input-file{display:none}
-.toolbar{display:flex;gap:8px;margin-top:12px}
-small{color:#666}
-@media (max-width: 700px) {.app {margin: 0 auto;width: auto;}}
+* {
+    box-sizing: border-box
+}
+
+html,
+body,
+#app {
+    background: #f0f0f2;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial
+}
+
+.app {
+    background: #fdfdff;
+    width: 600px;
+    margin: 5em auto;
+    padding: 2em
+}
+
+.header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+.canvas-wrap {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #f3f4f6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative
+}
+
+.canvas-wrap canvas {
+    touch-action: none
+}
+
+.btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #111;
+    color: #fff;
+    cursor: pointer
+}
+
+.input-file {
+    display: none
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px
+}
+
+small {
+    color: #666
+}
+
+@media (max-width: 700px) {
+    .app {
+        margin: 0 auto;
+        width: auto;
+    }
+}
 
 /* CSS baru atau yang dimodifikasi untuk drop area */
 .drop-area {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed #ccc;
-  border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #888;
-  font-size: 1.2em;
-  z-index: 10; /* Pastikan di atas canvas */
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #888;
+    font-size: 1.2em;
+    z-index: 10;
+    /* Pastikan di atas canvas */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
 
 .drop-area.hover {
-  border-color: #111;
-  color: #111;
-  background-color: rgba(255, 255, 255, 0.95);
+    border-color: #111;
+    color: #111;
+    background-color: rgba(255, 255, 255, 0.95);
 }
 
 .drop-area.hidden {
-  display: none;
+    display: none;
 }
 
 .drop-area .btn {
-  margin-top: 15px;
+    margin-top: 15px;
 }
 
 .drop-area-text {
-  margin-bottom: 10px;
-  }
+    margin-bottom: 10px;
+}
 
 .download-share-btn {
-  position: absolute;
-  bottom: 15px; /* Sesuaikan jarak dari bawah */
-  right: 15px; /* Sesuaikan jarak dari kanan */
-  z-index: 20; /* Pastikan di atas canvas dan drop-area */
-  
-  /* --- PERUBAHAN UTAMA: Hapus Background dan Dimensi --- */
-  background: none; /* Menghilangkan background */
-  border: none; /* Menghilangkan border */
-  border-radius: 0; /* Menghilangkan border-radius */
-  width: auto; /* Sesuaikan lebar dengan konten */
-  height: auto; /* Sesuaikan tinggi dengan konten */
-  box-shadow: none; /* Menghilangkan bayangan */
-  /* --- AKHIR PERUBAHAN UTAMA --- */
+    position: absolute;
+    bottom: 15px;
+    /* Sesuaikan jarak dari bawah */
+    right: 15px;
+    /* Sesuaikan jarak dari kanan */
+    z-index: 20;
+    /* Pastikan di atas canvas dan drop-area */
 
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1.8em; /* Ukuran ikon Font Awesome (ditingkatkan agar mudah diklik) */
-  padding: 5px; /* Tambahkan sedikit padding agar area klik lebih nyaman */
-  transition: color 0.3s ease, transform 0.2s ease;
-  
-  /* Opsional: Tambahkan sedikit bayangan teks agar ikon menonjol di atas gambar */
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8); 
+    /* --- PERUBAHAN UTAMA: Hapus Background dan Dimensi --- */
+    background: none;
+    /* Menghilangkan background */
+    border: none;
+    /* Menghilangkan border */
+    border-radius: 0;
+    /* Menghilangkan border-radius */
+    width: auto;
+    /* Sesuaikan lebar dengan konten */
+    height: auto;
+    /* Sesuaikan tinggi dengan konten */
+    box-shadow: none;
+    /* Menghilangkan bayangan */
+    /* --- AKHIR PERUBAHAN UTAMA --- */
+
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.8em;
+    /* Ukuran ikon Font Awesome (ditingkatkan agar mudah diklik) */
+    padding: 5px;
+    /* Tambahkan sedikit padding agar area klik lebih nyaman */
+    transition: color 0.3s ease, transform 0.2s ease;
+
+    /* Opsional: Tambahkan sedikit bayangan teks agar ikon menonjol di atas gambar */
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
 .download-share-btn:hover:not(:disabled) {
-  /* Ubah hanya warna ikon saat hover */
-  background: none; /* Pastikan background tetap hilang */
-  transform: scale(1.1); /* Sedikit efek zoom saat hover */
-  box-shadow: none;
+    /* Ubah hanya warna ikon saat hover */
+    background: none;
+    /* Pastikan background tetap hilang */
+    transform: scale(1.1);
+    /* Sedikit efek zoom saat hover */
+    box-shadow: none;
 }
 
 .download-share-btn:active:not(:disabled) {
-  transform: scale(1.0);
-  box-shadow: none;
+    transform: scale(1.0);
+    box-shadow: none;
 }
 
 .download-share-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+    cursor: not-allowed;
+    opacity: 0.5;
 }
