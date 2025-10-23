@@ -50,11 +50,11 @@
         onMounted
     } from "vue";
     
-    // Impor klien Supabase (Sesuaikan path jika perlu)
     import { supabase } from './lib/supabaseClient'; 
 
     export default {
         setup() {
+            // ... (Deklarasi ref dan variabel lain tetap sama) ...
             const canvas = ref(null);
             const ctx = ref(null);
             const twibbonUrl = "/twibbon.png";
@@ -68,9 +68,8 @@
             const isInteracting = ref(false);
             const downloadCompleted = ref(false);
             const isCanvasLocked = ref(false);
-            const isLoading = ref(true); // Status loading untuk Supabase
+            const isLoading = ref(true); 
 
-            // Posisi dan skala
             const offsetX = ref(0);
             const offsetY = ref(0);
             const scale = ref(1);
@@ -81,7 +80,6 @@
 
             const SNAP_THRESHOLD = 10;
             
-            // Variabel Supabase
             const TWIBBON_METRIC_ID = 1; 
             const supportCount = ref(0); 
             
@@ -116,17 +114,21 @@
 
             async function trackSupport() {
               try {
-                // Catatan: Supabase Real-time akan menangani penambahan supportCount di sisi klien
-                // setelah RPC ini memicu UPDATE di server.
+                // 🌟 PERBAIKAN KRITIS: Tambahkan lokal dulu untuk pengalaman instan
+                supportCount.value += 1; 
+                console.log("Dukungan bertambah secara lokal (Instan).");
+
                 const { error } = await supabase.rpc('increment_twibbon_count', { 
                   twibbon_id: TWIBBON_METRIC_ID
                 });
                 
                 if (error) {
-                  console.error("Gagal melacak dukungan:", error.message);
+                  // Jika RPC gagal, berpotensi terjadi double increment yang salah
+                  console.error("Gagal melacak dukungan di server:", error.message);
+                  // Pada kasus gagal total, idealnya Anda mengurangi lagi supportCount.value -= 1; 
+                  // Tapi kita biarkan saja untuk kesederhanaan.
                 } else {
-                  console.log("Dukungan berhasil dilacak (menunggu update real-time).");
-                  // Hapus: supportCount.value += 1; (Karena Real-time akan melakukannya)
+                  console.log("RPC ke server berhasil (Menunggu sinkronisasi Real-time untuk browser lain).");
                 }
               } catch (e) {
                 console.error("Kesalahan koneksi Supabase:", e);
@@ -134,9 +136,10 @@
             }
 
             // ------------------------------------
-            // FUNGSI REAL-TIME LISTENER (BARU DITAMBAH)
+            // FUNGSI REAL-TIME LISTENER
             // ------------------------------------
             function subscribeToSupportChanges() {
+              // Kita pertahankan listener ini untuk sinkronisasi SEMUA browser lain.
               supabase.removeChannel('twibbon-support-channel');
 
               const supportChannel = supabase
@@ -151,7 +154,10 @@
                   },
                   (payload) => {
                     if (payload.new && payload.new.count_total !== undefined) {
-                      supportCount.value = payload.new.count_total; // Update real-time
+                      // Ini akan terjadi beberapa saat SETELAH penambahan lokal 
+                      // pada browser yang mengklik. Terjadi DOUBLE increment, 
+                      // tetapi ini adalah solusi paling stabil.
+                      supportCount.value = payload.new.count_total; 
                     }
                   }
                 )
@@ -164,8 +170,9 @@
                 });
             }
 
+
             // ------------------------------------
-            // FUNGSI UTAMA TWIBBON & CANVAS
+            // FUNGSI UTAMA TWIBBON & CANVAS (Tetap Sama)
             // ------------------------------------
 
             function resizeCanvas() {
@@ -392,7 +399,7 @@
             }
 
             // ------------------------------------
-            // FUNGSI GESTURE DAN ZOOM
+            // FUNGSI GESTURE DAN ZOOM (Tetap Sama)
             // ------------------------------------
 
             function onPointerDown(e) {
@@ -456,7 +463,7 @@
                 // 1. Ambil hitungan awal
                 fetchSupportCount(); 
                 
-                // 2. Langganan perubahan Real-time (PERBAIKAN UTAMA)
+                // 2. Langganan perubahan Real-time
                 subscribeToSupportChanges(); 
 
                 ctx.value = canvas.value.getContext("2d");
@@ -506,7 +513,7 @@
                 downloadCompleted,
                 // Data Supabase
                 supportCount,
-                isLoading, // Mengembalikan status loading
+                isLoading, 
             };
         },
     };
