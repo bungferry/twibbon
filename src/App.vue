@@ -116,6 +116,8 @@
 
             async function trackSupport() {
               try {
+                // Catatan: Supabase Real-time akan menangani penambahan supportCount di sisi klien
+                // setelah RPC ini memicu UPDATE di server.
                 const { error } = await supabase.rpc('increment_twibbon_count', { 
                   twibbon_id: TWIBBON_METRIC_ID
                 });
@@ -123,12 +125,43 @@
                 if (error) {
                   console.error("Gagal melacak dukungan:", error.message);
                 } else {
-                  console.log("Dukungan berhasil dilacak.");
-                  supportCount.value += 1; 
+                  console.log("Dukungan berhasil dilacak (menunggu update real-time).");
+                  // Hapus: supportCount.value += 1; (Karena Real-time akan melakukannya)
                 }
               } catch (e) {
                 console.error("Kesalahan koneksi Supabase:", e);
               }
+            }
+
+            // ------------------------------------
+            // FUNGSI REAL-TIME LISTENER (BARU DITAMBAH)
+            // ------------------------------------
+            function subscribeToSupportChanges() {
+              supabase.removeChannel('twibbon-support-channel');
+
+              const supportChannel = supabase
+                .channel('twibbon-support-channel')
+                .on(
+                  'postgres_changes',
+                  { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'metrics', 
+                    filter: `id=eq.${TWIBBON_METRIC_ID}`
+                  },
+                  (payload) => {
+                    if (payload.new && payload.new.count_total !== undefined) {
+                      supportCount.value = payload.new.count_total; // Update real-time
+                    }
+                  }
+                )
+                .subscribe((status) => {
+                  if (status === 'SUBSCRIBED') {
+                    console.log('Real-time Supabase terhubung.');
+                  } else if (status === 'CHANNEL_ERROR') {
+                    console.error('Kesalahan koneksi Real-time.');
+                  }
+                });
             }
 
             // ------------------------------------
@@ -420,8 +453,12 @@
             // ------------------------------------
 
             onMounted(() => {
+                // 1. Ambil hitungan awal
                 fetchSupportCount(); 
                 
+                // 2. Langganan perubahan Real-time (PERBAIKAN UTAMA)
+                subscribeToSupportChanges(); 
+
                 ctx.value = canvas.value.getContext("2d");
                 twibbon.onload = drawCanvas;
                 twibbon.src = twibbonUrl;
