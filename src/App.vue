@@ -223,8 +223,8 @@ export default {
     }
 
     function downloadResult() {
-      downloadInProgress.value = true; // Set ini ke TRUE, dan biarkan tetap TRUE
-      isInteracting.value = false; // Pastikan interaksi disetel false, agar twibbon kembali solid dan garis hilang
+      downloadInProgress.value = true; 
+      isInteracting.value = false; // PASTIKAN TWIBBON SOLID SEBELUM UNDUH
       drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
 
       const link = document.createElement("a");
@@ -243,31 +243,68 @@ export default {
       }, 500);
     }
 
+    // ==========================================================
+    // PERBAIKAN FUNGSI SHARE RESULT
+    // ==========================================================
     async function shareResult() {
       if (!imageLoaded.value) return;
 
+      // PASTIKAN TWIBBON SOLID SEBELUM SHARE
+      isInteracting.value = false;
+      drawCanvas(); 
+      
       const dataUrl = canvas.value.toDataURL("image/png");
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
+      if (navigator.share) {
         try {
-          const blob = await (await fetch(dataUrl)).blob();
+          // 1. Dapatkan Blob dari dataURL
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          
+          // 2. Buat objek File
           const file = new File([blob], 'twibbon-hasil.png', { type: 'image/png' });
-          await navigator.share({
-            files: [file],
-            title: 'Twibbon Keren!',
-            text: 'Lihat twibbon keren yang kubuat!',
-          });
-          console.log('Konten berhasil dibagikan');
+
+          // 3. Coba share file (API modern)
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+             await navigator.share({
+                files: [file],
+                title: 'Twibbon Keren!',
+                text: 'Lihat twibbon keren yang kubuat!',
+             });
+             console.log('Konten berhasil dibagikan sebagai file.');
+          } else {
+             // 4. Fallback: Jika tidak bisa share file, coba share teks dan URL saja.
+             const shareData = {
+                title: 'Twibbon Keren!',
+                text: 'Lihat twibbon keren yang kubuat!',
+                url: window.location.href // Bagikan URL halaman saat ini
+             };
+
+             if (navigator.canShare(shareData)) {
+                 await navigator.share(shareData);
+                 console.log('Konten berhasil dibagikan sebagai teks/link.');
+                 alert('Berbagi file gambar tidak didukung di sini. Tautan telah dibagikan.');
+             } else {
+                 alert('Fungsi bagikan tidak didukung. Silakan unduh gambar secara manual.');
+             }
+          }
+
         } catch (error) {
-          console.error('Gagal membagikan:', error);
-          alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
+          // Tangani AbortError (jika pengguna membatalkan) dan kesalahan lainnya
+          if (error.name === 'AbortError') {
+             console.log('Pembagian dibatalkan oleh pengguna.');
+          } else {
+             console.error('Gagal membagikan:', error);
+             alert('Gagal membagikan gambar. Silakan unduh gambar secara manual. Kesalahan: ' + error.message);
+          }
         }
       } else {
         alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
       }
     }
-
-    // === Gesture dan Zoom ===
+    // ==========================================================
+    
+    // === Gesture dan Zoom (TIDAK ADA PERUBAHAN DI SINI) ===
     function onPointerDown(e) {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
