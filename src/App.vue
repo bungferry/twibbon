@@ -1,7 +1,7 @@
 <template>
     <div class="app">
         <div class="header">
-            <h2>Pfp Twibbon</h2>
+            <h2>TWIBBONMU</h2>
             <div class="controls">
                 <input ref="fileInput" type="file" accept="image/*" @change="onFile" style="display: none" />
                 
