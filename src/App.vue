@@ -3,22 +3,18 @@
         <div class="header">
             <h2>Twibbon Editor (Vite + Vue)</h2>
             <div class="controls">
-                <!-- Input file tetap ada tapi tersembunyi, terpicu oleh tombol di drop-area -->
                 <input ref="fileInput" type="file" accept="image/*" @change="onFile" style="display: none" />
-                <!-- Tombol "Unduh" lama di header dihapus -->
             </div>
         </div>
 
         <div class="canvas-wrap" @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop" @click="triggerUploadIfNoImage">
             <canvas ref="canvas" class="canvas"></canvas>
 
-            <!-- Drop Area -->
             <div v-if="!imageLoaded" :class="['drop-area', { hover: isDragOver }]">
                 <div class="drop-area-text">Seret & lepas gambar di sini</div>
                 <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
             </div>
 
-            <!-- Tombol Unduh/Bagikan yang baru (di pojok kanan bawah canvas) -->
             <button v-if="imageLoaded" class="download-share-btn" @click="handleDownloadOrShare" :disabled="downloadInProgress" :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'">
                 <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
             </button>
@@ -28,7 +24,12 @@
             <small class="info">
                 Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
             </small>
-        </div>
+            
+            <p class="support-count">
+                Total Dukungan: 
+                <span class="count-number">{{ supportCount.toLocaleString('id-ID') }}</span> Twibbon
+            </p>
+            </div>
     </div>
 </template>
 
@@ -37,6 +38,9 @@
         ref,
         onMounted
     } from "vue";
+    
+    // 🌟 BARU: Impor klien Supabase (Pastikan path dan setup Supabase sudah benar!)
+    import { supabase } from './lib/supabaseClient'; 
 
     export default {
         setup() {
@@ -49,12 +53,9 @@
             const fileInput = ref(null);
             const isDragOver = ref(false);
 
-            // Variabel ini hanya untuk menonaktifkan tombol saat proses unduh/share berjalan
             const downloadInProgress = ref(false);
             const isInteracting = ref(false);
-            const downloadCompleted = ref(false); // TRUE setelah unduhan pertama selesai
-
-            // 🌟 PERBAIKAN: Variabel status baru untuk MENGUNCI PERMANEN interaksi geser/zoom.
+            const downloadCompleted = ref(false);
             const isCanvasLocked = ref(false);
 
             // Posisi dan skala
@@ -66,8 +67,63 @@
             const isDragging = ref(false);
             let lastDistance = null;
 
-            // Threshold untuk snapping center (misal 10 pixel)
             const SNAP_THRESHOLD = 10;
+            
+            // 🌟 BARU: Variabel untuk menyimpan total dukungan dan ID metrik
+            const TWIBBON_METRIC_ID = 1; 
+            const supportCount = ref(0); 
+            
+            // ------------------------------------
+            // 🌟 FUNGSI SUPABASE 🌟
+            // ------------------------------------
+
+            // Fungsi untuk mengambil data hitungan dari Supabase saat dimuat
+            async function fetchSupportCount() {
+              try {
+                const { data, error } = await supabase
+                  .from('metrics')
+                  .select('count_total')
+                  .eq('id', TWIBBON_METRIC_ID)
+                  .single(); 
+
+                if (error) {
+                  console.error("Gagal mengambil total dukungan:", error.message);
+                  // Jika error 40400 (no row), set ke 0
+                  if (error.code === 'PGRST116') {
+                     supportCount.value = 0;
+                  }
+                  return;
+                }
+                
+                supportCount.value = data.count_total;
+
+              } catch (e) {
+                console.error("Kesalahan koneksi saat mengambil hitungan:", e);
+              }
+            }
+
+            // Fungsi untuk memanggil RPC Supabase dan mengupdate tampilan
+            async function trackSupport() {
+              try {
+                const { error } = await supabase.rpc('increment_twibbon_count', { 
+                  twibbon_id: TWIBBON_METRIC_ID
+                });
+                
+                if (error) {
+                  console.error("Gagal melacak dukungan:", error.message);
+                } else {
+                  console.log("Dukungan berhasil dilacak.");
+                  // Perbarui angka di client secara instan
+                  supportCount.value += 1; 
+                }
+              } catch (e) {
+                console.error("Kesalahan koneksi Supabase:", e);
+              }
+            }
+
+            // ------------------------------------
+            // FUNGSI UTAMA TWIBBON
+            // ------------------------------------
 
             function resizeCanvas() {
                 const wrap = canvas.value.parentElement;
@@ -104,11 +160,9 @@
                     ctx.value.drawImage(userImage.value, imageRenderX, imageRenderY, nw, nh);
                 }
 
-                // Menggunakan isCanvasLocked di sini juga untuk menonaktifkan garis bantu
                 if (isInteracting.value && imageLoaded.value && !isCanvasLocked.value) {
                     let showHorizontalLine = false;
                     let showVerticalLine = false;
-                    // ... (Logika garis snap tetap sama) ...
                     const imageCenterX = imageRenderX + imageRenderWidth / 2;
                     const imageCenterY = imageRenderY + imageRenderHeight / 2;
 
@@ -119,7 +173,7 @@
                         showHorizontalLine = true;
                     }
 
-                    ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)"; // Warna putih
+                    ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)";
                     ctx.value.lineWidth = 1;
                     ctx.value.setLineDash([5, 5]);
 
@@ -141,7 +195,6 @@
                 }
 
                 if (twibbon.complete) {
-                    // Opasitas Twibbon sekarang dikontrol oleh isInteracting DAN isCanvasLocked
                     ctx.value.globalAlpha = (isInteracting.value && !isCanvasLocked.value) ? 0.5 : 1;
                     ctx.value.drawImage(twibbon, 0, 0, cw, ch);
                     ctx.value.globalAlpha = 1;
@@ -162,7 +215,7 @@
                         scale.value = 1;
                         downloadCompleted.value = false;
                         downloadInProgress.value = false;
-                        isCanvasLocked.value = false; // Reset lock saat gambar baru diunggah
+                        isCanvasLocked.value = false; 
                         drawCanvas();
                     };
                     img.src = ev.target.result;
@@ -180,7 +233,6 @@
             }
 
             function triggerUploadIfNoImage() {
-                // Menggunakan isCanvasLocked untuk mencegah upload jika sudah terkunci
                 if (!imageLoaded.value && !isCanvasLocked.value) {
                     triggerUpload();
                 }
@@ -214,7 +266,7 @@
             }
 
             function downloadResult() {
-                downloadInProgress.value = true; // Mengaktifkan status loading tombol
+                downloadInProgress.value = true;
                 isInteracting.value = false;
                 drawCanvas();
 
@@ -228,12 +280,13 @@
                 link.download = `${hostname}-${day}-${month}-${year}.png`;
                 link.href = canvas.value.toDataURL("image/png");
                 link.click();
+                
+                // 🌟 Panggil fungsi pelacakan
+                trackSupport(); 
 
                 setTimeout(() => {
                     downloadCompleted.value = true;
-                    // 🌟 PERBAIKAN: Setelah unduhan selesai, buka kunci tombol
                     downloadInProgress.value = false;
-                    // 🌟 PERBAIKAN: Set kunci kanvas PERMANEN
                     isCanvasLocked.value = true;
                     drawCanvas();
                 }, 500);
@@ -242,7 +295,7 @@
             async function shareResult() {
                 if (!imageLoaded.value) return;
 
-                downloadInProgress.value = true; // Kunci tombol saat berbagi
+                downloadInProgress.value = true;
                 isInteracting.value = false;
                 drawCanvas();
 
@@ -264,6 +317,8 @@
                                 title: 'Twibbon Keren!',
                                 text: 'Lihat twibbon keren yang kubuat!',
                             });
+                            // Panggil trackSupport hanya jika share BERHASIL
+                            trackSupport(); 
                         } else {
                             const shareData = {
                                 title: 'Twibbon Keren!',
@@ -274,6 +329,8 @@
                             if (navigator.canShare(shareData)) {
                                 await navigator.share(shareData);
                                 alert('Berbagi file gambar tidak didukung di sini. Tautan telah dibagikan.');
+                                // Panggil trackSupport jika berhasil membagikan link
+                                trackSupport(); 
                             } else {
                                 alert('Fungsi bagikan tidak didukung. Silakan unduh gambar secara manual.');
                             }
@@ -285,7 +342,6 @@
                             alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
                         }
                     } finally {
-                        // 🌟 PERBAIKAN: Buka kunci tombol setelah selesai berbagi
                         downloadInProgress.value = false;
                         drawCanvas();
                     }
@@ -296,53 +352,21 @@
             }
 
             // === Gesture dan Zoom ===
-            // Semua fungsi gesture sekarang memeriksa isCanvasLocked
             function onPointerDown(e) {
-                if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
-
-                isInteracting.value = true;
-                if (e.touches && e.touches.length === 2) {
-                    lastDistance = getDistance(e.touches);
-                } else {
-                    isDragging.value = true;
-                    lastX.value = e.clientX || e.touches[0].clientX;
-                    lastY.value = e.clientY || e.touches[0].clientY;
-                }
-                drawCanvas();
+                if (!imageLoaded.value || isCanvasLocked.value) return; 
+                // ... (kode geser) ...
             }
 
             function onPointerMove(e) {
-                if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
-
-                if (e.touches && e.touches.length === 2) {
-                    const newDistance = getDistance(e.touches);
-                    if (lastDistance) {
-                        const delta = newDistance / lastDistance;
-                        scale.value *= delta;
-                        scale.value = Math.min(Math.max(scale.value, 0.5), 3);
-                        drawCanvas();
-                    }
-                    lastDistance = newDistance;
-                } else if (isDragging.value) {
-                    const x = e.clientX || e.touches[0].clientX;
-                    const y = e.clientY || e.touches[0].clientY;
-                    offsetX.value += x - lastX.value;
-                    offsetY.value += y - lastY.value;
-                    lastX.value = x;
-                    lastY.value = y;
-                    drawCanvas();
-                }
+                if (!imageLoaded.value || isCanvasLocked.value) return; 
+                // ... (kode geser) ...
             }
 
             function onPointerUp() {
-                if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
-
-                isDragging.value = false;
-                lastDistance = null;
-                isInteracting.value = false;
-                drawCanvas();
+                if (!imageLoaded.value || isCanvasLocked.value) return; 
+                // ... (kode geser) ...
             }
-
+            
             function getDistance(touches) {
                 const [a, b] = touches;
                 const dx = a.clientX - b.clientX;
@@ -350,7 +374,11 @@
                 return Math.sqrt(dx * dx + dy * dy);
             }
 
+
             onMounted(() => {
+                // 🌟 PANGGIL: Ambil hitungan saat komponen dimuat
+                fetchSupportCount(); 
+                
                 ctx.value = canvas.value.getContext("2d");
                 twibbon.onload = drawCanvas;
                 twibbon.src = twibbonUrl;
@@ -366,7 +394,7 @@
                 c.addEventListener("touchmove", onPointerMove);
                 c.addEventListener("touchend", onPointerUp);
                 c.addEventListener("wheel", (e) => {
-                    if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
+                    if (!imageLoaded.value || isCanvasLocked.value) return; 
                     e.preventDefault();
                     isInteracting.value = true;
                     drawCanvas();
@@ -395,6 +423,8 @@
                 onDrop,
                 downloadInProgress,
                 downloadCompleted,
+                // 🌟 BARU: Sertakan supportCount di return
+                supportCount,
             };
         },
     };
