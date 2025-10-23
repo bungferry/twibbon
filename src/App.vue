@@ -16,7 +16,7 @@
                 </div>
                 
                 <button @click="incrementManualSupport" class="btn btn-dev">
-                    <i class="fas fa-rocket"></i> +200
+                    <i class="fas fa-rocket"></i> +1000 
                 </button>
             </div>
         </div>
@@ -155,20 +155,22 @@
               }
             }
             
-            // 🌟 FUNGSI BARU UNTUK TOMBOL MANUAL (+200) 🌟
+            // 🌟 FUNGSI BARU UNTUK TOMBOL MANUAL (+1000) 🌟
             function incrementManualSupport() {
-                const INCREMENT_AMOUNT = 200; 
+                const INCREMENT_AMOUNT = 1000; // 🌟 DIGANDAKAN 1000 KALI 🌟
 
                 console.log(`Menambahkan ${INCREMENT_AMOUNT} dukungan...`);
 
                 // Tambahkan nilai secara instan di klien untuk feedback cepat
                 supportCount.value += INCREMENT_AMOUNT; 
 
-                // Lakukan panggilan ke server sebanyak 200 kali
-                // Catatan: Ini mengirim 200 permintaan jaringan sekaligus!
+                // Lakukan panggilan ke server sebanyak 1000 kali
+                // Catatan: Ini mengirim 1000 permintaan jaringan sekaligus!
                 for (let i = 0; i < INCREMENT_AMOUNT; i++) {
-                    // Panggil tanpa menunggu (async fire-and-forget)
-                    trackSupport(); 
+                    // Panggil trackSupport() tanpa menunggu
+                    // Perhatikan: trackSupport() juga menambah 1 lokal, jadi ini mungkin terjadi double counting sementara,
+                    // tapi Real-time akan mengembalikannya ke nilai benar dari server.
+                    supabase.rpc('increment_twibbon_count', { twibbon_id: TWIBBON_METRIC_ID });
                 }
 
                 console.log(`${INCREMENT_AMOUNT} permintaan RPC dikirim ke Supabase.`);
