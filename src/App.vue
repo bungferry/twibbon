@@ -1,3 +1,58 @@
+<template>
+  <div class="app">
+    <div class="header">
+      <h2>Twibbon Editor (Vite + Vue)</h2>
+      <div class="controls">
+        <!-- Input file tetap ada tapi tersembunyi, terpicu oleh tombol di drop-area -->
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          @change="onFile"
+          style="display: none"
+        />
+        <!-- Tombol "Unduh" lama di header dihapus -->
+      </div>
+    </div>
+
+    <div
+      class="canvas-wrap"
+      @dragover.prevent="onDragOver"
+      @dragleave="onDragLeave"
+      @drop.prevent="onDrop"
+      @click="triggerUploadIfNoImage"
+    >
+      <canvas ref="canvas" class="canvas"></canvas>
+
+      <!-- Drop Area -->
+      <div
+        v-if="!imageLoaded"
+        :class="['drop-area', { hover: isDragOver }]"
+      >
+        <div class="drop-area-text">Seret & lepas gambar di sini</div>
+        <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
+      </div>
+
+      <!-- Tombol Unduh/Bagikan yang baru (di pojok kanan bawah canvas) -->
+      <button
+        v-if="imageLoaded"
+        class="download-share-btn"
+        @click="handleDownloadOrShare"
+        :disabled="downloadInProgress"
+        :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
+      >
+        <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
+      </button>
+    </div>
+
+    <div class="toolbar">
+      <small class="info">
+        Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
+      </small>
+    </div>
+  </div>
+</template>
+
 <script>
 import { ref, onMounted } from "vue";
 
@@ -158,7 +213,7 @@ export default {
     }
 
     function handleDownloadOrShare() {
-      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress di sini, karena tombolnya sudah disabled
+      if (!imageLoaded.value) return;
 
       if (downloadCompleted.value) {
         shareResult();
@@ -168,7 +223,6 @@ export default {
     }
 
     function downloadResult() {
-      // <--- Perbaikan di sini
       downloadInProgress.value = true; // Set ini ke TRUE, dan biarkan tetap TRUE
       isInteracting.value = false; // Pastikan interaksi disetel false, agar twibbon kembali solid dan garis hilang
       drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
@@ -184,21 +238,15 @@ export default {
       link.href = canvas.value.toDataURL("image/png");
       link.click();
 
-      // <--- Setelah unduhan dipicu, set downloadCompleted ke TRUE
-      // downloadInProgress.value tetap TRUE agar tidak bisa geser/zoom lagi.
       setTimeout(() => {
         downloadCompleted.value = true;
-      }, 500); // Beri sedikit waktu untuk browser memproses unduhan
+      }, 500);
     }
 
     async function shareResult() {
-      if (!imageLoaded.value) return; // Tidak perlu cek downloadInProgress, karena sudah dinonaktifkan
+      if (!imageLoaded.value) return;
 
       const dataUrl = canvas.value.toDataURL("image/png");
-
-      // Perlu diingat, Web Share API mungkin gagal jika dipanggil dari iframe
-      // atau jika tidak ada interaksi pengguna yang langsung mendahuluinya.
-      // Di sini, asumsinya ada interaksi (klik tombol).
 
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
         try {
@@ -220,8 +268,6 @@ export default {
     }
 
     // === Gesture dan Zoom ===
-    // Fungsi-fungsi ini sudah memiliki kondisi `!downloadInProgress.value`,
-    // jadi tidak ada perubahan di sini.
     function onPointerDown(e) {
       if (!imageLoaded.value || downloadInProgress.value) return;
 
