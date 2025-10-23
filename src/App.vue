@@ -35,14 +35,14 @@
 
       <!-- Tombol Unduh/Bagikan yang baru (di pojok kanan bawah canvas) -->
       <button
-        v-if="imageLoaded"
-        class="download-share-btn"
-        @click="handleDownloadOrShare"
-        :disabled="downloadInProgress"
-        :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
-      >
-        <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
-      </button>
+  v-if="imageLoaded"
+  class="download-share-btn"
+  @click="handleDownloadOrShare"
+  :disabled="downloadInProgress"
+  :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
+>
+  <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
+</button>
     </div>
 
     <div class="toolbar">
