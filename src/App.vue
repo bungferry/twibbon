@@ -66,10 +66,14 @@ export default {
     const twibbon = new Image();
     const fileInput = ref(null);
     const isDragOver = ref(false);
-    // Variabel ini HARUS direset ke FALSE agar tombol tidak disabled setelah operasi selesai.
+    
+    // Variabel ini hanya untuk menonaktifkan tombol saat proses unduh/share berjalan
     const downloadInProgress = ref(false); 
     const isInteracting = ref(false);
     const downloadCompleted = ref(false); // TRUE setelah unduhan pertama selesai
+    
+    // 🌟 PERBAIKAN: Variabel status baru untuk MENGUNCI PERMANEN interaksi geser/zoom.
+    const isCanvasLocked = ref(false); 
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -117,11 +121,12 @@ export default {
 
         ctx.value.drawImage(userImage.value, imageRenderX, imageRenderY, nw, nh);
       }
-
-      if (isInteracting.value && imageLoaded.value && !downloadInProgress.value) {
+      
+      // Menggunakan isCanvasLocked di sini juga untuk menonaktifkan garis bantu
+      if (isInteracting.value && imageLoaded.value && !isCanvasLocked.value) {
         let showHorizontalLine = false;
         let showVerticalLine = false;
-
+        // ... (Logika garis snap tetap sama) ...
         const imageCenterX = imageRenderX + imageRenderWidth / 2;
         const imageCenterY = imageRenderY + imageRenderHeight / 2;
 
@@ -154,7 +159,8 @@ export default {
       }
 
       if (twibbon.complete) {
-        ctx.value.globalAlpha = isInteracting.value ? 0.5 : 1;
+        // Opasitas Twibbon sekarang dikontrol oleh isInteracting DAN isCanvasLocked
+        ctx.value.globalAlpha = (isInteracting.value && !isCanvasLocked.value) ? 0.5 : 1;
         ctx.value.drawImage(twibbon, 0, 0, cw, ch);
         ctx.value.globalAlpha = 1;
       }
@@ -172,8 +178,9 @@ export default {
           offsetX.value = 0;
           offsetY.value = 0;
           scale.value = 1;
-          downloadCompleted.value = false; // Reset status unduhan saat gambar baru diunggah
-          downloadInProgress.value = false; // Reset ini juga, agar bisa edit lagi setelah upload baru
+          downloadCompleted.value = false; 
+          downloadInProgress.value = false; 
+          isCanvasLocked.value = false; // Reset lock saat gambar baru diunggah
           drawCanvas();
         };
         img.src = ev.target.result;
@@ -191,13 +198,14 @@ export default {
     }
 
     function triggerUploadIfNoImage() {
-      if (!imageLoaded.value && !downloadInProgress.value) {
+      // Menggunakan isCanvasLocked untuk mencegah upload jika sudah terkunci
+      if (!imageLoaded.value && !isCanvasLocked.value) { 
         triggerUpload();
       }
     }
 
     function onDragOver() {
-      if (!imageLoaded.value && !downloadInProgress.value) {
+      if (!imageLoaded.value && !isCanvasLocked.value) {
         isDragOver.value = true;
       }
     }
@@ -208,7 +216,7 @@ export default {
 
     function onDrop(e) {
       isDragOver.value = false;
-      if (!imageLoaded.value && !downloadInProgress.value && e.dataTransfer.files.length > 0) {
+      if (!imageLoaded.value && !isCanvasLocked.value && e.dataTransfer.files.length > 0) {
         loadImageFromFile(e.dataTransfer.files[0]);
       }
     }
@@ -224,7 +232,7 @@ export default {
     }
 
     function downloadResult() {
-      downloadInProgress.value = true; 
+      downloadInProgress.value = true; // Mengaktifkan status loading tombol
       isInteracting.value = false; 
       drawCanvas(); 
 
@@ -241,8 +249,10 @@ export default {
 
       setTimeout(() => {
         downloadCompleted.value = true;
-        // 🌟 PERBAIKAN: Reset downloadInProgress agar tombol tidak disabled lagi!
+        // 🌟 PERBAIKAN: Setelah unduhan selesai, buka kunci tombol
         downloadInProgress.value = false; 
+        // 🌟 PERBAIKAN: Set kunci kanvas PERMANEN
+        isCanvasLocked.value = true;
         drawCanvas();
       }, 500);
     }
@@ -250,8 +260,7 @@ export default {
     async function shareResult() {
       if (!imageLoaded.value) return; 
 
-      // Aktifkan loading untuk mencegah double click/interaksi lain saat proses share
-      downloadInProgress.value = true; 
+      downloadInProgress.value = true; // Kunci tombol saat berbagi
       isInteracting.value = false;
       drawCanvas();
       
@@ -269,9 +278,7 @@ export default {
                 title: 'Twibbon Keren!',
                 text: 'Lihat twibbon keren yang kubuat!',
              });
-             console.log('Konten berhasil dibagikan sebagai file.');
           } else {
-             // Fallback: Share link/text
              const shareData = {
                 title: 'Twibbon Keren!',
                 text: 'Lihat twibbon keren yang kubuat!',
@@ -280,7 +287,6 @@ export default {
 
              if (navigator.canShare(shareData)) {
                  await navigator.share(shareData);
-                 console.log('Konten berhasil dibagikan sebagai teks/link.');
                  alert('Berbagi file gambar tidak didukung di sini. Tautan telah dibagikan.');
              } else {
                  alert('Fungsi bagikan tidak didukung. Silakan unduh gambar secara manual.');
@@ -293,20 +299,20 @@ export default {
              alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
           }
         } finally {
-          // 🌟 PERBAIKAN: Reset downloadInProgress setelah operasi share selesai (berhasil/gagal/dibatalkan)
+          // 🌟 PERBAIKAN: Buka kunci tombol setelah selesai berbagi
           downloadInProgress.value = false; 
           drawCanvas();
         }
       } else {
         alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
-        // Jika tidak didukung, pastikan tetap di-reset
         downloadInProgress.value = false; 
       }
     }
 
-    // === Gesture dan Zoom (Tidak ada perubahan) ===
+    // === Gesture dan Zoom ===
+    // Semua fungsi gesture sekarang memeriksa isCanvasLocked
     function onPointerDown(e) {
-      if (!imageLoaded.value || downloadInProgress.value) return;
+      if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
 
       isInteracting.value = true;
       if (e.touches && e.touches.length === 2) {
@@ -320,7 +326,7 @@ export default {
     }
 
     function onPointerMove(e) {
-      if (!imageLoaded.value || downloadInProgress.value) return;
+      if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
 
       if (e.touches && e.touches.length === 2) {
         const newDistance = getDistance(e.touches);
@@ -343,7 +349,7 @@ export default {
     }
 
     function onPointerUp() {
-      if (!imageLoaded.value || downloadInProgress.value) return;
+      if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
 
       isDragging.value = false;
       lastDistance = null;
@@ -374,7 +380,7 @@ export default {
       c.addEventListener("touchmove", onPointerMove);
       c.addEventListener("touchend", onPointerUp);
       c.addEventListener("wheel", (e) => {
-        if (!imageLoaded.value || downloadInProgress.value) return;
+        if (!imageLoaded.value || isCanvasLocked.value) return; // Menggunakan isCanvasLocked
         e.preventDefault();
         isInteracting.value = true;
         drawCanvas();
@@ -406,4 +412,4 @@ export default {
     };
   },
 };
-</script>
+</script> 
