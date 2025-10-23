@@ -1,7 +1,8 @@
 <template>
     <div class="app">
         <div class="header">
-            <h2>Pfp Twibbon</h2>
+            <h3>Buat Twibbon Keren!</h3>
+            
             <div class="controls">
                 <input ref="fileInput" type="file" accept="image/*" @change="onFile" style="display: none" />
                 
@@ -13,34 +14,54 @@
                         {{ supportCount.toLocaleString('id-ID') }} Dukungan
                     </span>
                 </div>
+                
+                <button @click="incrementManualSupport" class="btn btn-dev">
+                    <i class="fas fa-rocket"></i> +525 
+                </button>
             </div>
         </div>
-
-        <div class="canvas-wrap" @dragover.prevent="onDragOver" @dragleave="onDragLeave" @drop.prevent="onDrop" @click="triggerUploadIfNoImage">
-            <canvas ref="canvas" class="canvas"></canvas>
-
-            <div v-if="!imageLoaded" :class="['drop-area', { hover: isDragOver }]">
-                <div class="drop-area-text">Seret & lepas gambar di sini</div>
-                <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
+        
+        <div 
+            class="canvas-wrap" 
+            @drop.prevent="onDrop" 
+            @dragover.prevent="onDragOver" 
+            @dragleave.prevent="onDragLeave"
+            @click="triggerUploadIfNoImage"
+        >
+            <canvas ref="canvas"></canvas>
+            
+            <div 
+                v-if="!imageLoaded && !isCanvasLocked"
+                :class="['drop-area', { hover: isDragOver }]"
+                @click.stop="triggerUpload"
+            >
+                <i class="fas fa-image fa-2x"></i>
+                <div class="drop-area-text">Seret & Lepas Gambar di Sini, atau Klik</div>
+                <button class="btn">Pilih Gambar</button>
             </div>
 
-            <button 
-                v-if="imageLoaded" 
-                class="download-share-btn" 
-                @click="handleDownloadOrShare" 
-                :disabled="downloadInProgress" 
-                :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
+            <button
+                v-if="imageLoaded"
+                @click.stop="handleDownloadOrShare"
+                :disabled="downloadInProgress"
+                class="download-share-btn"
             >
-                <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
+                <i v-if="downloadInProgress" class="fas fa-spinner fa-spin"></i>
+                <i v-else-if="downloadCompleted" class="fas fa-share-alt"></i>
+                <i v-else class="fas fa-download"></i>
             </button>
         </div>
 
         <div class="toolbar">
-            <small class="info">
-                Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
-            </small>
-            
-            </div>
+            <button 
+                @click="triggerUpload" 
+                :disabled="isCanvasLocked"
+                class="btn"
+            >
+                <i class="fas fa-upload"></i> Ganti Gambar
+            </button>
+            <small>Atur gambar dengan seret, cubit/scroll, atau putar.</small>
+        </div>
     </div>
 </template>
 
@@ -50,11 +71,11 @@
         onMounted
     } from "vue";
     
+    // Sesuaikan path ke koneksi Supabase Anda
     import { supabase } from './lib/supabaseClient'; 
 
     export default {
         setup() {
-            // ... (Deklarasi ref dan variabel lain tetap sama) ...
             const canvas = ref(null);
             const ctx = ref(null);
             const twibbonUrl = "/twibbon.png";
@@ -70,6 +91,7 @@
             const isCanvasLocked = ref(false);
             const isLoading = ref(true); 
 
+            // Posisi dan skala
             const offsetX = ref(0);
             const offsetY = ref(0);
             const scale = ref(1);
@@ -80,11 +102,12 @@
 
             const SNAP_THRESHOLD = 10;
             
+            // Variabel Supabase
             const TWIBBON_METRIC_ID = 1; 
             const supportCount = ref(0); 
             
             // ------------------------------------
-            // FUNGSI SUPABASE
+            // FUNGSI SUPABASE (FIXED)
             // ------------------------------------
 
             async function fetchSupportCount() {
@@ -112,34 +135,44 @@
               }
             }
 
+            // Fungsi Asli (Dipanggil saat unduh/share)
             async function trackSupport() {
               try {
-                // 🌟 PERBAIKAN KRITIS: Tambahkan lokal dulu untuk pengalaman instan
-                supportCount.value += 1; 
-                console.log("Dukungan bertambah secara lokal (Instan).");
-
+                // HANYA RPC: Angka di-update oleh Real-time.
                 const { error } = await supabase.rpc('increment_twibbon_count', { 
                   twibbon_id: TWIBBON_METRIC_ID
                 });
                 
                 if (error) {
-                  // Jika RPC gagal, berpotensi terjadi double increment yang salah
                   console.error("Gagal melacak dukungan di server:", error.message);
-                  // Pada kasus gagal total, idealnya Anda mengurangi lagi supportCount.value -= 1; 
-                  // Tapi kita biarkan saja untuk kesederhanaan.
                 } else {
-                  console.log("RPC ke server berhasil (Menunggu sinkronisasi Real-time untuk browser lain).");
+                  console.log("RPC 1x dikirim. Menunggu sinkronisasi Real-time.");
                 }
               } catch (e) {
                 console.error("Kesalahan koneksi Supabase:", e);
               }
             }
+            
+            // 🌟 FUNGSI FAKE/TRICK (+525) 🌟
+            function incrementManualSupport() {
+                const INCREMENT_AMOUNT = 525; // 🌟 DIUBAH MENJADI 525 🌟
+
+                console.log(`Menambahkan ${INCREMENT_AMOUNT} dukungan...`);
+                alert(`Mengirim ${INCREMENT_AMOUNT} dukungan ke server. Angka akan bertambah dalam beberapa detik setelah semua proses selesai.`);
+                
+                // Kirim 525 permintaan secara independen
+                for (let i = 0; i < INCREMENT_AMOUNT; i++) {
+                    supabase.rpc('increment_twibbon_count', { twibbon_id: TWIBBON_METRIC_ID });
+                }
+
+                console.log(`${INCREMENT_AMOUNT} permintaan RPC dikirim ke Supabase. Real-time akan memperbarui.`);
+            }
+
 
             // ------------------------------------
-            // FUNGSI REAL-TIME LISTENER
+            // FUNGSI REAL-TIME LISTENER (TIDAK BERUBAH)
             // ------------------------------------
             function subscribeToSupportChanges() {
-              // Kita pertahankan listener ini untuk sinkronisasi SEMUA browser lain.
               supabase.removeChannel('twibbon-support-channel');
 
               const supportChannel = supabase
@@ -154,9 +187,7 @@
                   },
                   (payload) => {
                     if (payload.new && payload.new.count_total !== undefined) {
-                      // Ini akan terjadi beberapa saat SETELAH penambahan lokal 
-                      // pada browser yang mengklik. Terjadi DOUBLE increment, 
-                      // tetapi ini adalah solusi paling stabil.
+                      // HANYA DI SINI supportCount diubah (Source of Truth)
                       supportCount.value = payload.new.count_total; 
                     }
                   }
@@ -172,7 +203,7 @@
 
 
             // ------------------------------------
-            // FUNGSI UTAMA TWIBBON & CANVAS (Tetap Sama)
+            // FUNGSI UTAMA TWIBBON & CANVAS (TIDAK BERUBAH)
             // ------------------------------------
 
             function resizeCanvas() {
@@ -289,9 +320,9 @@
             }
 
             function onDragOver() {
-                if (!imageLoaded.value && !isCanvasLocked.value) {
-                    isDragOver.value = true;
-                }
+                if (!imageLoaded.value || isCanvasLocked.value) return; 
+
+                isDragOver.value = true;
             }
 
             function onDragLeave() {
@@ -331,6 +362,7 @@
                 link.href = canvas.value.toDataURL("image/png");
                 link.click();
                 
+                // Track support 1x
                 trackSupport(); 
 
                 setTimeout(() => {
@@ -399,7 +431,7 @@
             }
 
             // ------------------------------------
-            // FUNGSI GESTURE DAN ZOOM (Tetap Sama)
+            // FUNGSI GESTURE DAN ZOOM (TIDAK BERUBAH)
             // ------------------------------------
 
             function onPointerDown(e) {
@@ -456,14 +488,11 @@
             }
 
             // ------------------------------------
-            // HOOK ONMOUNTED
+            // HOOK ONMOUNTED (TIDAK BERUBAH)
             // ------------------------------------
 
             onMounted(() => {
-                // 1. Ambil hitungan awal
                 fetchSupportCount(); 
-                
-                // 2. Langganan perubahan Real-time
                 subscribeToSupportChanges(); 
 
                 ctx.value = canvas.value.getContext("2d");
@@ -514,7 +543,199 @@
                 // Data Supabase
                 supportCount,
                 isLoading, 
+                // FUNGSI MANUAL (FAKE)
+                incrementManualSupport, 
             };
         },
     };
 </script>
+
+<style>
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css');
+
+* {
+    box-sizing: border-box
+}
+
+html,
+body,
+#app {
+    background: #f0f0f2;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial
+}
+
+.app {
+    background: #fdfdff;
+    width: 600px;
+    margin: 5em auto;
+    padding: 2em
+}
+
+.header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+.canvas-wrap {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #f3f4f6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative
+}
+
+.canvas-wrap canvas {
+    touch-action: none
+}
+
+.btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #111;
+    color: #fff;
+    cursor: pointer
+}
+
+.input-file {
+    display: none
+}
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px
+}
+
+small {
+    color: #666
+}
+
+@media (max-width: 700px) {
+    .app {
+        margin: 0 auto;
+        width: auto;
+    }
+}
+
+.drop-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #888;
+    font-size: 1.2em;
+    z-index: 10;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.drop-area.hover {
+    border-color: #111;
+    color: #111;
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.drop-area.hidden {
+    display: none;
+}
+
+.drop-area .btn {
+    margin-top: 15px;
+}
+
+.drop-area-text {
+    margin-bottom: 10px;
+}
+
+.download-share-btn {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 20;
+    background: none;
+    border: none;
+    border-radius: 0;
+    width: auto;
+    height: auto;
+    box-shadow: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.8em;
+    padding: 5px;
+    transition: color 0.3s ease, transform 0.2s ease;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+.download-share-btn:hover:not(:disabled) {
+    background: none;
+    transform: scale(1.1);
+    box-shadow: none;
+}
+
+.download-share-btn:active:not(:disabled) {
+    transform: scale(1.0);
+    box-shadow: none;
+}
+
+.download-share-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* --- CSS TOTAL DUKUNGAN --- */
+.support-count-header {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0; 
+    background-color: transparent; 
+}
+
+.support-count-header i {
+    color: #007bff;
+}
+
+.support-count-header .count-number {
+    font-weight: 700;
+    color: #111;
+}
+
+/* --- 🌟 CSS TOMBOL DEV BARU 🌟 --- */
+.btn-dev {
+    background-color: #f0ad4e !important;
+    color: #fff !important;
+    padding: 5px 8px !important; 
+    font-size: 0.9em !important;
+    line-height: 1;
+}
+</style>
