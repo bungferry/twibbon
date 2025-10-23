@@ -16,7 +16,7 @@
                 </div>
                 
                 <button @click="incrementManualSupport" class="btn btn-dev">
-                    <i class="fas fa-rocket"></i> +525 
+                    <i class="fas fa-rocket"></i> +1000
                 </button>
             </div>
         </div>
@@ -107,7 +107,7 @@
             const supportCount = ref(0); 
             
             // ------------------------------------
-            // FUNGSI SUPABASE (FIXED)
+            // FUNGSI SUPABASE
             // ------------------------------------
 
             async function fetchSupportCount() {
@@ -135,10 +135,11 @@
               }
             }
 
-            // Fungsi Asli (Dipanggil saat unduh/share)
             async function trackSupport() {
               try {
-                // HANYA RPC: Angka di-update oleh Real-time.
+                // HANYA Tambahkan 1 lokal untuk trackSupport() yang asli
+                supportCount.value += 1; 
+
                 const { error } = await supabase.rpc('increment_twibbon_count', { 
                   twibbon_id: TWIBBON_METRIC_ID
                 });
@@ -146,31 +147,36 @@
                 if (error) {
                   console.error("Gagal melacak dukungan di server:", error.message);
                 } else {
-                  console.log("RPC 1x dikirim. Menunggu sinkronisasi Real-time.");
+                  // Real-time listener akan sinkronisasi setelah ini
+                  console.log("RPC ke server berhasil (Menunggu sinkronisasi Real-time).");
                 }
               } catch (e) {
                 console.error("Kesalahan koneksi Supabase:", e);
               }
             }
             
-            // 🌟 FUNGSI FAKE/TRICK (+525) 🌟
+            // 🌟 FUNGSI BARU UNTUK TOMBOL MANUAL (+200) 🌟
             function incrementManualSupport() {
-                const INCREMENT_AMOUNT = 525; // 🌟 DIUBAH MENJADI 525 🌟
+                const INCREMENT_AMOUNT = 1000; 
 
                 console.log(`Menambahkan ${INCREMENT_AMOUNT} dukungan...`);
-                alert(`Mengirim ${INCREMENT_AMOUNT} dukungan ke server. Angka akan bertambah dalam beberapa detik setelah semua proses selesai.`);
-                
-                // Kirim 525 permintaan secara independen
+
+                // Tambahkan nilai secara instan di klien untuk feedback cepat
+                supportCount.value += INCREMENT_AMOUNT; 
+
+                // Lakukan panggilan ke server sebanyak 200 kali
+                // Catatan: Ini mengirim 200 permintaan jaringan sekaligus!
                 for (let i = 0; i < INCREMENT_AMOUNT; i++) {
-                    supabase.rpc('increment_twibbon_count', { twibbon_id: TWIBBON_METRIC_ID });
+                    // Panggil tanpa menunggu (async fire-and-forget)
+                    trackSupport(); 
                 }
 
-                console.log(`${INCREMENT_AMOUNT} permintaan RPC dikirim ke Supabase. Real-time akan memperbarui.`);
+                console.log(`${INCREMENT_AMOUNT} permintaan RPC dikirim ke Supabase.`);
             }
 
 
             // ------------------------------------
-            // FUNGSI REAL-TIME LISTENER (TIDAK BERUBAH)
+            // FUNGSI REAL-TIME LISTENER
             // ------------------------------------
             function subscribeToSupportChanges() {
               supabase.removeChannel('twibbon-support-channel');
@@ -187,7 +193,6 @@
                   },
                   (payload) => {
                     if (payload.new && payload.new.count_total !== undefined) {
-                      // HANYA DI SINI supportCount diubah (Source of Truth)
                       supportCount.value = payload.new.count_total; 
                     }
                   }
@@ -203,7 +208,7 @@
 
 
             // ------------------------------------
-            // FUNGSI UTAMA TWIBBON & CANVAS (TIDAK BERUBAH)
+            // FUNGSI UTAMA TWIBBON & CANVAS
             // ------------------------------------
 
             function resizeCanvas() {
@@ -431,7 +436,7 @@
             }
 
             // ------------------------------------
-            // FUNGSI GESTURE DAN ZOOM (TIDAK BERUBAH)
+            // FUNGSI GESTURE DAN ZOOM
             // ------------------------------------
 
             function onPointerDown(e) {
@@ -488,7 +493,7 @@
             }
 
             // ------------------------------------
-            // HOOK ONMOUNTED (TIDAK BERUBAH)
+            // HOOK ONMOUNTED
             // ------------------------------------
 
             onMounted(() => {
@@ -543,7 +548,7 @@
                 // Data Supabase
                 supportCount,
                 isLoading, 
-                // FUNGSI MANUAL (FAKE)
+                // 🌟 FUNGSI BARU UNTUK TOMBOL
                 incrementManualSupport, 
             };
         },
