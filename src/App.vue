@@ -33,7 +33,11 @@
             
             <p class="support-count">
                 Total Dukungan: 
-                <span class="count-number">{{ supportCount.toLocaleString('id-ID') }}</span> Twibbon
+                <span class="count-number">
+                    <span v-if="isLoading">Memuat...</span>
+                    <span v-else>{{ supportCount.toLocaleString('id-ID') }}</span>
+                </span>
+                Twibbon
             </p>
         </div>
     </div>
@@ -45,7 +49,7 @@
         onMounted
     } from "vue";
     
-    // Impor klien Supabase (Pastikan path ke file ini sudah benar!)
+    // Impor klien Supabase (Sesuaikan path jika perlu)
     import { supabase } from './lib/supabaseClient'; 
 
     export default {
@@ -63,6 +67,7 @@
             const isInteracting = ref(false);
             const downloadCompleted = ref(false);
             const isCanvasLocked = ref(false);
+            const isLoading = ref(true); // Status loading untuk Supabase
 
             // Posisi dan skala
             const offsetX = ref(0);
@@ -75,12 +80,12 @@
 
             const SNAP_THRESHOLD = 10;
             
-            // Variabel untuk menyimpan total dukungan dan ID metrik
-            const TWIBBON_METRIC_ID = 1; // ID baris di tabel 'metrics'
+            // Variabel Supabase
+            const TWIBBON_METRIC_ID = 1; 
             const supportCount = ref(0); 
             
             // ------------------------------------
-            // FUNGSI SUPABASE (Pengambilan & Pelacakan Hitungan)
+            // FUNGSI SUPABASE
             // ------------------------------------
 
             async function fetchSupportCount() {
@@ -93,7 +98,6 @@
 
                 if (error) {
                   console.error("Gagal mengambil total dukungan:", error.message);
-                  // Jika tidak ada row, inisialisasi count ke 0
                   if (error.code === 'PGRST116') {
                      supportCount.value = 0;
                   }
@@ -104,6 +108,8 @@
 
               } catch (e) {
                 console.error("Kesalahan koneksi saat mengambil hitungan:", e);
+              } finally {
+                isLoading.value = false;
               }
             }
 
@@ -117,7 +123,6 @@
                   console.error("Gagal melacak dukungan:", error.message);
                 } else {
                   console.log("Dukungan berhasil dilacak.");
-                  // Perbarui angka di client secara instan
                   supportCount.value += 1; 
                 }
               } catch (e) {
@@ -285,7 +290,6 @@
                 link.href = canvas.value.toDataURL("image/png");
                 link.click();
                 
-                // Panggil fungsi pelacakan Supabase
                 trackSupport(); 
 
                 setTimeout(() => {
@@ -321,7 +325,6 @@
                                 title: 'Twibbon Keren!',
                                 text: 'Lihat twibbon keren yang kubuat!',
                             });
-                            // Panggil trackSupport hanya jika share BERHASIL
                             trackSupport(); 
                         } else {
                             const shareData = {
@@ -333,7 +336,6 @@
                             if (navigator.canShare(shareData)) {
                                 await navigator.share(shareData);
                                 alert('Berbagi file gambar tidak didukung di sini. Tautan telah dibagikan.');
-                                // Panggil trackSupport jika berhasil membagikan link
                                 trackSupport(); 
                             } else {
                                 alert('Fungsi bagikan tidak didukung. Silakan unduh gambar secara manual.');
@@ -356,7 +358,7 @@
             }
 
             // ------------------------------------
-            // FUNGSI GESTURE DAN ZOOM (Diperbaiki)
+            // FUNGSI GESTURE DAN ZOOM
             // ------------------------------------
 
             function onPointerDown(e) {
@@ -417,7 +419,6 @@
             // ------------------------------------
 
             onMounted(() => {
-                // Ambil hitungan saat komponen dimuat
                 fetchSupportCount(); 
                 
                 ctx.value = canvas.value.getContext("2d");
@@ -435,7 +436,6 @@
                 c.addEventListener("touchmove", onPointerMove);
                 c.addEventListener("touchend", onPointerUp);
                 
-                // Logika wheel/zoom
                 c.addEventListener("wheel", (e) => {
                     if (!imageLoaded.value || isCanvasLocked.value) return; 
                     e.preventDefault();
@@ -468,6 +468,7 @@
                 downloadCompleted,
                 // Data Supabase
                 supportCount,
+                isLoading, // Mengembalikan status loading
             };
         },
     };
