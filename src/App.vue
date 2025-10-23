@@ -3,6 +3,7 @@
     <div class="header">
       <h2>Twibbon Editor (Vite + Vue)</h2>
       <div class="controls">
+        <!-- Input file tetap ada tapi tersembunyi, terpicu oleh tombol di drop-area -->
         <input
           ref="fileInput"
           type="file"
@@ -10,7 +11,7 @@
           @change="onFile"
           style="display: none"
         />
-        <button class="btn" @click="download" :disabled="!imageLoaded || downloadInProgress">Unduh</button>
+        <!-- Tombol "Unduh" lama di header dihapus -->
       </div>
     </div>
 
@@ -23,6 +24,7 @@
     >
       <canvas ref="canvas" class="canvas"></canvas>
 
+      <!-- Drop Area -->
       <div
         v-if="!imageLoaded"
         :class="['drop-area', { hover: isDragOver }]"
@@ -30,6 +32,17 @@
         <div class="drop-area-text">Seret & lepas gambar di sini</div>
         <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
       </div>
+
+      <!-- Tombol Unduh/Bagikan yang baru (di pojok kanan bawah canvas) -->
+      <button
+        v-if="imageLoaded"
+        class="download-share-btn"
+        @click="handleDownloadOrShare"
+        :disabled="downloadInProgress"
+        :title="downloadCompleted ? 'Bagikan Hasil' : 'Unduh Gambar'"
+      >
+        <i :class="downloadCompleted ? 'fas fa-share-alt' : 'fas fa-download'"></i>
+      </button>
     </div>
 
     <div class="toolbar">
@@ -53,8 +66,9 @@ export default {
     const twibbon = new Image();
     const fileInput = ref(null);
     const isDragOver = ref(false);
-    const downloadInProgress = ref(false);
+    const downloadInProgress = ref(false); // Ini akan tetap TRUE setelah unduhan pertama
     const isInteracting = ref(false);
+    const downloadCompleted = ref(false); // Ini akan jadi TRUE setelah unduhan pertama selesai
 
     // Posisi dan skala
     const offsetX = ref(0);
@@ -103,29 +117,21 @@ export default {
         ctx.value.drawImage(userImage.value, imageRenderX, imageRenderY, nw, nh);
       }
 
-      // <--- Logika Baru untuk Garis Titik Pusat Dinamis
       if (isInteracting.value && imageLoaded.value && !downloadInProgress.value) {
         let showHorizontalLine = false;
         let showVerticalLine = false;
 
-        // Hitung posisi tengah gambar yang sedang di-render
         const imageCenterX = imageRenderX + imageRenderWidth / 2;
         const imageCenterY = imageRenderY + imageRenderHeight / 2;
 
-        // Periksa apakah posisi tengah gambar mendekati posisi tengah kanvas
         if (Math.abs(imageCenterX - cw / 2) < SNAP_THRESHOLD) {
           showVerticalLine = true;
-          // Opsional: "Snap" gambar ke tengah jika sangat dekat
-          // offsetX.value += (cw / 2) - imageCenterX;
         }
         if (Math.abs(imageCenterY - ch / 2) < SNAP_THRESHOLD) {
           showHorizontalLine = true;
-          // Opsional: "Snap" gambar ke tengah jika sangat dekat
-          // offsetY.value += (ch / 2) - imageCenterY;
         }
 
-      //  ctx.value.strokeStyle = "rgba(0, 0, 0, 0.4)";
-        ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.value.strokeStyle = "rgba(255, 255, 255, 0.6)"; // Warna putih
         ctx.value.lineWidth = 1;
         ctx.value.setLineDash([5, 5]);
 
@@ -165,6 +171,8 @@ export default {
           offsetX.value = 0;
           offsetY.value = 0;
           scale.value = 1;
+          downloadCompleted.value = false; // Reset status unduhan saat gambar baru diunggah
+          downloadInProgress.value = false; // Reset ini juga, agar bisa edit lagi setelah upload baru
           drawCanvas();
         };
         img.src = ev.target.result;
@@ -204,10 +212,20 @@ export default {
       }
     }
 
-    function download() {
-      if (!imageLoaded.value || downloadInProgress.value) return;
+    function handleDownloadOrShare() {
+      if (!imageLoaded.value) return;
 
-      downloadInProgress.value = true;
+      if (downloadCompleted.value) {
+        shareResult();
+      } else {
+        downloadResult();
+      }
+    }
+
+    function downloadResult() {
+      downloadInProgress.value = true; // Set ini ke TRUE, dan biarkan tetap TRUE
+      isInteracting.value = false; // Pastikan interaksi disetel false, agar twibbon kembali solid dan garis hilang
+      drawCanvas(); // Panggil drawCanvas untuk memastikan twibbon kembali solid sebelum diunduh
 
       const link = document.createElement("a");
       const hostname = window.location.hostname.replace(/^www\./, "");
@@ -219,6 +237,34 @@ export default {
       link.download = `${hostname}-${day}-${month}-${year}.png`;
       link.href = canvas.value.toDataURL("image/png");
       link.click();
+
+      setTimeout(() => {
+        downloadCompleted.value = true;
+      }, 500);
+    }
+
+    async function shareResult() {
+      if (!imageLoaded.value) return;
+
+      const dataUrl = canvas.value.toDataURL("image/png");
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([await (await fetch(dataUrl)).blob()], 'twibbon-hasil.png', { type: 'image/png' })] })) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], 'twibbon-hasil.png', { type: 'image/png' });
+          await navigator.share({
+            files: [file],
+            title: 'Twibbon Keren!',
+            text: 'Lihat twibbon keren yang kubuat!',
+          });
+          console.log('Konten berhasil dibagikan');
+        } catch (error) {
+          console.error('Gagal membagikan:', error);
+          alert('Gagal membagikan gambar. Silakan coba lagi atau unduh secara manual.');
+        }
+      } else {
+        alert('Fungsi bagikan tidak didukung di browser ini. Silakan unduh gambar dan bagikan secara manual.');
+      }
     }
 
     // === Gesture dan Zoom ===
@@ -294,7 +340,7 @@ export default {
         if (!imageLoaded.value || downloadInProgress.value) return;
         e.preventDefault();
         isInteracting.value = true;
-        drawCanvas(); // Panggil segera untuk tampilkan garis & transparan twibbon
+        drawCanvas();
         scale.value *= e.deltaY < 0 ? 1.1 : 0.9;
         scale.value = Math.min(Math.max(scale.value, 0.5), 3);
         drawCanvas();
@@ -310,7 +356,7 @@ export default {
       onFile,
       triggerUpload,
       triggerUploadIfNoImage,
-      download,
+      handleDownloadOrShare,
       canvas,
       imageLoaded,
       fileInput,
@@ -319,6 +365,7 @@ export default {
       onDragLeave,
       onDrop,
       downloadInProgress,
+      downloadCompleted,
     };
   },
 };
