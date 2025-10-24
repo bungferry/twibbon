@@ -276,13 +276,13 @@ small {
 /* Untuk mengaktifkan, class 'dark-mode' ditambahkan ke elemen <html> */
 
 .body.dark-mode, html.dark-mode{
-  background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  background: linear-gradient(135deg, #1a1a1a, #2a2a2a) !important;
 /*  background: #121212 !important;  Latar belakang body menjadi sangat gelap */
   color: #e0e0e0; /* Warna teks default menjadi terang */
 }
 
 .dark-mode .app {
-  background: #1e1e1e; /* Kontainer aplikasi menjadi gelap */
+  background: #1e1e1e !important; /* Kontainer aplikasi menjadi gelap */
   box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 /*  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);  Bayangan gelap yang lebih halus */
 }
