@@ -17,6 +17,7 @@ body,
     justify-content: flex-start; /* Mengatur konten mulai dari atas */
     align-items: center; /* Memusatkan semua konten secara horizontal */
     padding: 20px; /* Padding di sekitar semua konten agar tidak menempel ke tepi layar */
+    overflow-x: hidden;
 }
 
 .app {
