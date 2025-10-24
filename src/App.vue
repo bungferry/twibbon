@@ -37,7 +37,7 @@
 
         <div class="toolbar">
             <small class="info">
-                Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
+                Silakan unggah gambar Anda di atas untuk mulai mengedit.
             </small>
         </div>
     </div>
