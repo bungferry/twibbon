@@ -39,13 +39,8 @@
             <small class="info">
                 Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop).
             </small>
-            
-            </div>
+        </div>
     </div>
-
-    <footer class="main-footer">
-        &copy; Copyright TWIBBONMU {{ currentYear }} 
-    </footer>
 </template>
 
 <script>
