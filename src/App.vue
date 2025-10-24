@@ -42,6 +42,10 @@
             
             </div>
     </div>
+
+    <footer class="main-footer">
+        &copy; Copyright TWIBBONMU {{ currentYear }} 
+    </footer>
 </template>
 
 <script>
