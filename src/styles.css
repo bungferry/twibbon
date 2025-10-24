@@ -18,7 +18,7 @@
   box-sizing: border-box;
 }
 
-/* Efek lembut saat halaman dimuat */
+/* Efek lembut saat halaman dimuat (Mode Terang Default) */
 html,
 body,
 #app {
@@ -33,7 +33,8 @@ body,
   padding: 20px;
   width: 100%;
   opacity: 0;
-  animation: fadeInSmooth 0.7s ease forwards; /* Fade lembut saat muat ulang */
+  animation: fadeInSmooth 0.7s ease forwards;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Transisi warna untuk dark mode */
 }
 
 /* Konten Aplikasi */
@@ -46,7 +47,8 @@ body,
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   opacity: 0;
   animation: fadeInSmooth 0.9s ease forwards;
-  animation-delay: 0.15s; /* Sedikit delay biar muncul lebih lembut */
+  animation-delay: 0.15s;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .header {
@@ -89,6 +91,7 @@ body,
   opacity: 0;
   animation: fadeInSmooth 1s ease forwards;
   animation-delay: 0.4s;
+  transition: background-color 0.3s ease;
 }
 
 .canvas-wrap canvas {
@@ -131,31 +134,7 @@ body,
 small {
   color: #666;
   font-size: clamp(0.75rem, 1.5vw, 0.9rem);
-}
-
-/* Media Query untuk Mobile */
-@media (max-width: 700px) {
-  html,
-  body,
-  #app {
-    padding: 10px;
-    align-items: flex-start;
-  }
-  .app {
-    margin-top: 0;
-    padding: 1.5em;
-    box-shadow: none;
-    border-radius: 0;
-    max-width: 100%;
-  }
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .controls {
-    width: 100%;
-    justify-content: flex-start;
-  }
+  transition: color 0.3s ease;
 }
 
 /* Area Drop dan Tombol */
@@ -201,7 +180,7 @@ small {
   margin-bottom: 10px;
 }
 
-/* Tombol Mengambang */
+/* Tombol Mengambang (Download/Share) */
 .download-share-btn {
   position: absolute;
   bottom: 15px;
@@ -252,13 +231,168 @@ small {
   opacity: 0;
   animation: fadeInSmooth 1s ease forwards;
   animation-delay: 0.3s;
+  transition: color 0.3s ease;
 }
 
 .support-count-header i {
   color: #007bff;
+  transition: color 0.3s ease;
 }
 
 .support-count-header .count-number {
   font-weight: 700;
   color: #111;
+  transition: color 0.3s ease;
 }
+
+/* Media Query untuk Mobile */
+@media (max-width: 700px) {
+  html,
+  body,
+  #app {
+    padding: 10px;
+    align-items: flex-start;
+  }
+  .app {
+    margin-top: 0;
+    padding: 1.5em;
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ================================== */
+/*          DARK MODE STYLES          */
+/* ================================== */
+/* Untuk mengaktifkan, class 'dark-mode' ditambahkan ke elemen <html> */
+
+html.dark-mode {
+  background: #121212 !important; /* Latar belakang body menjadi sangat gelap */
+  color: #e0e0e0; /* Warna teks default menjadi terang */
+}
+
+.dark-mode .app {
+  background: #1e1e1e; /* Kontainer aplikasi menjadi gelap */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); /* Bayangan gelap yang lebih halus */
+}
+
+.dark-mode .header h2 {
+  color: #ffffff; /* Judul menjadi putih */
+}
+
+.dark-mode .canvas-wrap {
+  background: #333333; /* Background area gambar menjadi gelap */
+}
+
+.dark-mode .btn {
+  background: #007bff; /* Menggunakan warna accent untuk tombol utama */
+  color: #ffffff;
+}
+
+.dark-mode .btn:hover {
+  background: #4fa8ff; /* Warna hover accent yang lebih terang */
+}
+
+.dark-mode small {
+  color: #aaaaaa; /* Teks info menjadi abu-abu terang */
+}
+
+.dark-mode .drop-area {
+  border-color: #555;
+  background-color: rgba(30, 30, 30, 0.85); /* Background transparan gelap */
+  color: #ccc;
+}
+
+.dark-mode .drop-area.hover {
+  border-color: #007bff; /* Border accent saat hover */
+  color: #ffffff;
+  background-color: rgba(30, 30, 30, 0.95);
+}
+
+.dark-mode .drop-area .btn {
+  background: #444; 
+  color: #fff;
+}
+
+.dark-mode .download-share-btn {
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .support-count-header {
+  color: #aaaaaa; 
+}
+
+.dark-mode .support-count-header i {
+  color: #69b5ff; /* Ikon hati menggunakan blue yang lebih cerah untuk kontras */
+}
+
+.dark-mode .support-count-header .count-number {
+  color: #ffffff; /* Angka menjadi putih */
+}
+
+@media (max-width: 700px) {
+  .dark-mode .app {
+    box-shadow: none;
+  }
+}
+
+
+/* ================================== */
+/*          FAB THEME TOGGLE          */
+/* ================================== */
+
+.theme-toggle-fab {
+    position: fixed;
+    bottom: 25px; /* Jarak dari bawah */
+    right: 25px; /* Jarak dari kanan */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: #111; /* Hitam, untuk mode terang */
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    z-index: 100; /* Pastikan di atas semua elemen */
+}
+
+.theme-toggle-fab:hover {
+    transform: scale(1.05);
+    background: #333;
+}
+
+/* Styling FAB dalam Mode Gelap */
+.dark-mode .theme-toggle-fab {
+    background: #007bff; /* Biru/Accent di mode gelap */
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .theme-toggle-fab:hover {
+    background: #4fa8ff;
+}
+
+/* Penyesuaian Responsif untuk FAB */
+@media (max-width: 700px) {
+    .theme-toggle-fab {
+        bottom: 15px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
+    }
+    }
