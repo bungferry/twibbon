@@ -20,7 +20,7 @@
             <canvas ref="canvas" class="canvas"></canvas>
 
             <div v-if="!imageLoaded" :class="['drop-area', { hover: isDragOver }]">
-                <div class="drop-area-text">Seret & lepas gambar di sini</div>
+                <div class="drop-area-text"><i class="fas fa-image"></i> Seret & lepas gambar di sini</div>
                 <button class="btn" @click.stop="triggerUpload">Atau klik untuk mengunggah</button>
             </div>
 
