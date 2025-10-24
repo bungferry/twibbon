@@ -278,6 +278,12 @@ body.dark-mode,
   background: #007bff;
   color: #fff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+   position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
 }
 .dark-mode .theme-toggle-fab:hover {
   background: #4fa8ff;
