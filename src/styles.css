@@ -9,7 +9,7 @@ body,
 #app {
     background: #f0f0f2;
     /* height: 100%; */ /* Ini bisa dihapus jika Anda ingin body bisa scroll */
-    min-height: 100vh; /* Pastikan body minimal setinggi viewport */
+    min-height: 100%; /* Pastikan body minimal setinggi viewport */
     margin: 0;
     padding: 0;
     font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial;
