@@ -1,17 +1,29 @@
 /* Import Font Awesome */
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 
+/* Animasi Fade In Global */
+@keyframes fadeInSmooth {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Reset dan Box Sizing */
 * {
   box-sizing: border-box;
 }
 
-/* Container Utama */
+/* Efek lembut saat halaman dimuat */
 html,
 body,
 #app {
   background: #f0f0f2;
-  min-height: 100vh; /* Menggunakan vh agar flexbox bekerja penuh di viewport, ini penting untuk mobile */
+  min-height: 100%;
   margin: 0;
   padding: 0;
   font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
@@ -19,17 +31,22 @@ body,
   justify-content: center;
   align-items: flex-start;
   padding: 20px;
-  width: 100%; /* Pastikan elemen ini mengambil lebar penuh */
+  width: 100%;
+  opacity: 0;
+  animation: fadeInSmooth 0.7s ease forwards; /* Fade lembut saat muat ulang */
 }
 
 /* Konten Aplikasi */
 .app {
   background: #fdfdff;
   width: 100%;
-  max-width: 600px; /* Batasi lebar maksimum */
+  max-width: 600px;
   padding: 2em;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  animation: fadeInSmooth 0.9s ease forwards;
+  animation-delay: 0.15s; /* Sedikit delay biar muncul lebih lembut */
 }
 
 .header {
@@ -39,6 +56,9 @@ body,
   justify-content: space-between;
   flex-wrap: wrap;
   margin-bottom: 15px;
+  opacity: 0;
+  animation: fadeInSmooth 0.8s ease forwards;
+  animation-delay: 0.25s;
 }
 
 .header h2 {
@@ -50,6 +70,9 @@ body,
   display: flex;
   gap: 8px;
   align-items: center;
+  opacity: 0;
+  animation: fadeInSmooth 0.9s ease forwards;
+  animation-delay: 0.35s;
 }
 
 .canvas-wrap {
@@ -63,13 +86,16 @@ body,
   overflow: hidden;
   position: relative;
   margin-bottom: 15px;
+  opacity: 0;
+  animation: fadeInSmooth 1s ease forwards;
+  animation-delay: 0.4s;
 }
 
 .canvas-wrap canvas {
   touch-action: none;
-  /* Tambahan: Pastikan canvas tidak memiliki dimensi tetap yang memicu scroll */
   max-width: 100%;
   max-height: 100%;
+  transition: opacity 0.4s ease;
 }
 
 .btn {
@@ -80,10 +106,12 @@ body,
   color: #fff;
   cursor: pointer;
   font-size: clamp(0.8rem, 2vw, 1rem);
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s, opacity 0.2s;
 }
+
 .btn:hover {
   background: #333;
+  transform: translateY(-1px);
 }
 
 .input-file {
@@ -95,6 +123,9 @@ body,
   gap: 8px;
   margin-top: 12px;
   flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeInSmooth 0.8s ease forwards;
+  animation-delay: 0.5s;
 }
 
 small {
@@ -127,7 +158,7 @@ small {
   }
 }
 
-/* Gaya Area Drop dan Tombol Lain (Dibiarkan Sesuai Asli) */
+/* Area Drop dan Tombol */
 .drop-area {
   position: absolute;
   top: 0;
@@ -145,8 +176,11 @@ small {
   font-size: clamp(1rem, 2vw, 1.2em);
   z-index: 10;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out, opacity 0.3s ease;
   text-align: center;
+  opacity: 0;
+  animation: fadeInSmooth 1.2s ease forwards;
+  animation-delay: 0.6s;
 }
 
 .drop-area.hover {
@@ -167,6 +201,7 @@ small {
   margin-bottom: 10px;
 }
 
+/* Tombol Mengambang */
 .download-share-btn {
   position: absolute;
   bottom: 15px;
@@ -174,7 +209,6 @@ small {
   z-index: 20;
   background: none;
   border: none;
-  border-radius: 0;
   width: auto;
   height: auto;
   box-shadow: none;
@@ -185,19 +219,19 @@ small {
   cursor: pointer;
   font-size: clamp(1.5em, 4vw, 1.8em);
   padding: 5px;
-  transition: color 0.3s ease, transform 0.2s ease;
+  transition: color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  animation: fadeInSmooth 1.3s ease forwards;
+  animation-delay: 0.7s;
 }
 
 .download-share-btn:hover:not(:disabled) {
-  background: none;
   transform: scale(1.1);
-  box-shadow: none;
 }
 
 .download-share-btn:active:not(:disabled) {
   transform: scale(1);
-  box-shadow: none;
 }
 
 .download-share-btn:disabled {
@@ -205,6 +239,7 @@ small {
   opacity: 0.5;
 }
 
+/* Jumlah Dukungan */
 .support-count-header {
   font-size: clamp(0.9rem, 2vw, 1.05em);
   font-weight: 600;
@@ -214,6 +249,9 @@ small {
   gap: 5px;
   padding: 0;
   background-color: transparent;
+  opacity: 0;
+  animation: fadeInSmooth 1s ease forwards;
+  animation-delay: 0.3s;
 }
 
 .support-count-header i {
