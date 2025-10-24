@@ -1,34 +1,7 @@
-/* ===========================================================
-   FONT & RESET
-=========================================================== */
+/* Import Font Awesome */
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* ===========================================================
-   GLOBAL & BASE STYLES
-=========================================================== */
-html,
-body,
-#app {
-  background: #f0f0f2;
-  min-height: 100%;
-  width: 100%;
-  font-family: Inter, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
-  animation: fadeInSmooth 0.7s ease forwards;
-  opacity: 0;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Animasi masuk halus */
+/* Animasi Fade In Global */
 @keyframes fadeInSmooth {
   0% {
     opacity: 0;
@@ -40,9 +13,30 @@ body,
   }
 }
 
-/* ===========================================================
-   APP CONTAINER
-=========================================================== */
+/* Reset dan Box Sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* Efek lembut saat halaman dimuat */
+html,
+body,
+#app {
+  background: #f0f0f2;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  width: 100%;
+  opacity: 0;
+  animation: fadeInSmooth 0.7s ease forwards; /* Fade lembut saat muat ulang */
+}
+
+/* Konten Aplikasi */
 .app {
   background: #fdfdff;
   width: 100%;
@@ -50,15 +44,11 @@ body,
   padding: 2em;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  animation: fadeInSmooth 0.9s ease forwards;
   opacity: 0;
-  animation-delay: 0.15s;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInSmooth 0.9s ease forwards;
+  animation-delay: 0.15s; /* Sedikit delay biar muncul lebih lembut */
 }
 
-/* ===========================================================
-   HEADER & CONTROL AREA
-=========================================================== */
 .header {
   display: flex;
   gap: 12px;
@@ -66,27 +56,25 @@ body,
   justify-content: space-between;
   flex-wrap: wrap;
   margin-bottom: 15px;
-  animation: fadeInSmooth 0.8s ease forwards;
   opacity: 0;
+  animation: fadeInSmooth 0.8s ease forwards;
   animation-delay: 0.25s;
 }
 
 .header h2 {
   font-size: clamp(1.5rem, 4vw, 2rem);
+  margin: 0;
 }
 
 .controls {
   display: flex;
   gap: 8px;
   align-items: center;
-  animation: fadeInSmooth 0.9s ease forwards;
   opacity: 0;
+  animation: fadeInSmooth 0.9s ease forwards;
   animation-delay: 0.35s;
 }
 
-/* ===========================================================
-   CANVAS WRAPPER
-=========================================================== */
 .canvas-wrap {
   width: 100%;
   aspect-ratio: 1/1;
@@ -98,10 +86,9 @@ body,
   overflow: hidden;
   position: relative;
   margin-bottom: 15px;
-  animation: fadeInSmooth 1s ease forwards;
   opacity: 0;
+  animation: fadeInSmooth 1s ease forwards;
   animation-delay: 0.4s;
-  transition: background-color 0.3s ease;
 }
 
 .canvas-wrap canvas {
@@ -111,9 +98,6 @@ body,
   transition: opacity 0.4s ease;
 }
 
-/* ===========================================================
-   BUTTONS
-=========================================================== */
 .btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -124,17 +108,63 @@ body,
   font-size: clamp(0.8rem, 2vw, 1rem);
   transition: background 0.2s, transform 0.2s, opacity 0.2s;
 }
+
 .btn:hover {
   background: #333;
   transform: translateY(-1px);
 }
 
-/* ===========================================================
-   DROP AREA
-=========================================================== */
+.input-file {
+  display: none;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeInSmooth 0.8s ease forwards;
+  animation-delay: 0.5s;
+}
+
+small {
+  color: #666;
+  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+}
+
+/* Media Query untuk Mobile */
+@media (max-width: 700px) {
+  html,
+  body,
+  #app {
+    padding: 10px;
+    align-items: flex-start;
+  }
+  .app {
+    margin-top: 0;
+    padding: 1.5em;
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Area Drop dan Tombol */
 .drop-area {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -145,28 +175,71 @@ body,
   color: #888;
   font-size: clamp(1rem, 2vw, 1.2em);
   z-index: 10;
-  text-align: center;
   cursor: pointer;
-  animation: fadeInSmooth 1.2s ease forwards;
-  opacity: 0;
-  animation-delay: 0.6s;
   transition: all 0.3s ease-in-out, opacity 0.3s ease;
+  text-align: center;
+  opacity: 0;
+  animation: fadeInSmooth 1.2s ease forwards;
+  animation-delay: 0.6s;
 }
+
 .drop-area.hover {
   border-color: #111;
   color: #111;
   background-color: rgba(255, 255, 255, 0.95);
 }
+
 .drop-area.hidden {
   display: none;
 }
+
 .drop-area .btn {
   margin-top: 15px;
 }
 
-/* ===========================================================
-   SUPPORT COUNTER
-=========================================================== */
+.drop-area-text {
+  margin-bottom: 10px;
+}
+
+/* Tombol Mengambang */
+.download-share-btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  z-index: 20;
+  background: none;
+  border: none;
+  width: auto;
+  height: auto;
+  box-shadow: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: clamp(1.5em, 4vw, 1.8em);
+  padding: 5px;
+  transition: color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  animation: fadeInSmooth 1.3s ease forwards;
+  animation-delay: 0.7s;
+}
+
+.download-share-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.download-share-btn:active:not(:disabled) {
+  transform: scale(1);
+}
+
+.download-share-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Jumlah Dukungan */
 .support-count-header {
   font-size: clamp(0.9rem, 2vw, 1.05em);
   font-weight: 600;
@@ -174,153 +247,18 @@ body,
   display: flex;
   align-items: center;
   gap: 5px;
-  transition: color 0.3s ease;
+  padding: 0;
+  background-color: transparent;
+  opacity: 0;
+  animation: fadeInSmooth 1s ease forwards;
+  animation-delay: 0.3s;
 }
+
 .support-count-header i {
   color: #007bff;
 }
+
 .support-count-header .count-number {
   font-weight: 700;
   color: #111;
-}
-
-/* ===========================================================
-   FLOATING ACTION BUTTON (FAB)
-=========================================================== */
-.theme-toggle-fab {
-  position: fixed;
-  bottom: 25px;
-  right: 25px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: none;
-  background: #111;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
-  z-index: 100;
-}
-.theme-toggle-fab:hover {
-  transform: scale(1.05);
-  background: #333;
-}
-
-/* ===========================================================
-   DARK MODE
-=========================================================== */
-html.dark-mode,
-body.dark-mode,
-#app.dark-mode,
-.dark-mode,
-.dark-mode html,
-.dark-mode body,
-.dark-mode #app {
-  background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%) !important;
-  color: #e0e0e0 !important;
-  min-height: 100% !important; 
-  height: 100% !important;
-}
-
-.dark-mode .app {
-  background: #1e1e1e !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-}
-
-.dark-mode .header h2 {
-  color: #fff;
-}
-
-.dark-mode .canvas-wrap {
-  background: #333;
-}
-
-.dark-mode .btn {
-  background: #007bff;
-  color: #fff;
-}
-.dark-mode .btn:hover {
-  background: #4fa8ff;
-}
-
-.dark-mode small {
-  color: #aaa;
-}
-
-.dark-mode .drop-area {
-  border-color: #555;
-  background-color: rgba(30, 30, 30, 0.85);
-  color: #ccc;
-}
-.dark-mode .drop-area.hover {
-  border-color: #007bff;
-  background-color: rgba(30, 30, 30, 0.95);
-  color: #fff;
-}
-
-.dark-mode .support-count-header {
-  color: #aaa;
-}
-.dark-mode .support-count-header i {
-  color: #69b5ff;
-}
-.dark-mode .support-count-header .count-number {
-  color: #fff;
-}
-
-/* FAB di Mode Gelap */
-.dark-mode .theme-toggle-fab {
-  background: #007bff;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-   position: fixed;
-  bottom: 25px;
-  right: 25px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-}
-.dark-mode .theme-toggle-fab:hover {
-  background: #4fa8ff;
-}
-
-/* ===========================================================
-   RESPONSIVE
-=========================================================== */
-@media (max-width: 700px) {
-  html,
-  body,
-  #app {
-    padding: 10px;
-    align-items: flex-start;
-  }
-
-  .app {
-    padding: 1.5em;
-    border-radius: 0;
-    max-width: 100%;
-    box-shadow: none;
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .controls {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .theme-toggle-fab {
-    bottom: 15px;
-    right: 15px;
-    width: 45px;
-    height: 45px;
-  }
 }
