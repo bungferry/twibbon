@@ -27,7 +27,7 @@
     <div class="toolbar">
       <small class="info">
         <span v-if="imageLoaded"> Seret untuk memindahkan. Cubit dua jari untuk memperbesar. Scroll untuk zoom (desktop). </span>
-        <span v-else> Silakan unggah gambar Anda di atas untuk mulai mengedit. </span>
+        <span v-else> Silakan unggah gambar terbaik Anda di atas untuk mulai mengedit. </span>
       </small>
     </div>
   </div>
