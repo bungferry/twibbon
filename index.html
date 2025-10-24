@@ -34,26 +34,5 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
-    
-<script>
-window.addEventListener("beforeunload", () => {
-  document.body.classList.add("fade-out");
-  document.getElementById("app")?.classList.add("fade-out");
-});
-
-// Tambahkan efek fade-in pada canvas setelah gambar selesai dimuat
-document.addEventListener("DOMContentLoaded", () => {
-  const observer = new MutationObserver(() => {
-    const canvas = document.querySelector(".canvas-wrap canvas");
-    if (canvas && !canvas.classList.contains("loaded")) {
-      setTimeout(() => {
-        canvas.classList.add("loaded");
-      }, 150); // sedikit delay agar halus
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-});
-</script>
-
   </body>
 </html>
