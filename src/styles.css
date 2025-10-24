@@ -2,22 +2,27 @@
 
 * {
     box-sizing: border-box;
+    /* Tambahkan margin dan padding 0 pada semua elemen secara default, 
+       ini akan membantu menghilangkan spasi yang tidak diinginkan */
+    margin: 0; 
+    padding: 0;
 }
 
 html,
-body,
-#app {
-    background: #f0f0f2;
-    min-height: 100vh; /* Memastikan body minimal setinggi viewport */
-    margin: 0;
-    padding: 0;
+body {
+    height: 100%; /* HTML dan body harus mengisi seluruh tinggi viewport */
+    overflow-x: hidden; /* Sembunyikan scrollbar horizontal jika ada */
     font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial;
-    display: flex; /* Menggunakan Flexbox untuk layout keseluruhan */
-    flex-direction: column; /* Menumpuk konten (.app dan footer) secara vertikal */
-    justify-content: flex-start; /* Mengatur konten mulai dari atas */
-    align-items: center; /* Memusatkan semua konten secara horizontal */
+    background: #f0f0f2; /* Latar belakang untuk seluruh halaman */
+}
+
+#app {
+    height: 100%; /* #app juga harus mengisi seluruh tinggi yang tersedia dari body */
+    display: flex; /* Aktifkan Flexbox pada #app */
+    flex-direction: column; /* Konten di #app akan bertumpuk vertikal */
+    align-items: center; /* Pusatkan secara horizontal */
+    justify-content: space-between; /* Menempatkan .app di atas dan footer di bawah */
     padding: 20px; /* Padding di sekitar semua konten agar tidak menempel ke tepi layar */
-    overflow-x: hidden;
 }
 
 .app {
@@ -27,7 +32,8 @@ body,
     padding: 2em; /* Padding internal card */
     border-radius: 10px; /* Sudut membulat untuk efek card */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan untuk efek card */
-    margin-bottom: 20px; /* Jarak antara card .app dan footer */
+    /* margin-bottom dihapus di sini, karena jarak akan diatur oleh justify-content: space-between */
+    flex-shrink: 0; /* Pastikan .app tidak menyusut di bawah ukuran kontennya */
 }
 
 .header {
@@ -35,13 +41,13 @@ body,
     gap: 12px;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap; /* Izinkan wrap jika item terlalu banyak di layar kecil */
-    margin-bottom: 15px; /* Jarak bawah header */
+    flex-wrap: wrap;
+    margin-bottom: 15px;
 }
 
 .header h2 {
-    font-size: clamp(1.5rem, 4vw, 2rem); /* Ukuran font responsif untuk judul */
-    margin: 0; /* Hapus margin default h2 */
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    margin: 0;
 }
 
 .controls {
@@ -60,7 +66,7 @@ body,
     justify-content: center;
     overflow: hidden;
     position: relative;
-    margin-bottom: 15px; /* Jarak bawah canvas */
+    margin-bottom: 15px;
 }
 
 .canvas-wrap canvas {
@@ -74,7 +80,7 @@ body,
     background: #111;
     color: #fff;
     cursor: pointer;
-    font-size: clamp(0.8rem, 2vw, 1rem); /* Ukuran font responsif untuk tombol */
+    font-size: clamp(0.8rem, 2vw, 1rem);
 }
 
 .input-file {
@@ -85,23 +91,24 @@ body,
     display: flex;
     gap: 8px;
     margin-top: 12px;
-    flex-wrap: wrap; /* Izinkan wrap jika item terlalu banyak di layar kecil */
+    flex-wrap: wrap;
 }
 
 small {
     color: #666;
-    font-size: clamp(0.75rem, 1.5vw, 0.9rem); /* Ukuran font responsif untuk teks kecil */
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
 }
 
 /* FOOTER STYLES */
 .main-footer {
-    margin-top: 20px; /* Jarak dari .app ke footer */
+    /* margin-top dihapus di sini, karena jarak akan diatur oleh justify-content: space-between */
     padding: 10px;
     color: #666;
     text-align: center;
-    font-size: clamp(0.75rem, 1.5vw, 0.9rem); /* Ukuran font responsif */
-    width: 100%; /* Agar footer memenuhi lebar container */
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+    width: 100%;
     max-width: 600px; /* Ikuti max-width dari .app */
+    flex-shrink: 0; /* Pastikan footer tidak menyusut */
 }
 
 /* DROP AREA & DOWNLOAD BUTTON */
@@ -119,11 +126,11 @@ small {
     border-radius: 10px;
     background-color: rgba(255, 255, 255, 0.8);
     color: #888;
-    font-size: clamp(1rem, 2vw, 1.2em); /* Ukuran font responsif */
+    font-size: clamp(1rem, 2vw, 1.2em);
     z-index: 10;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    text-align: center; /* Pusatkan teks */
+    text-align: center;
 }
 
 .drop-area.hover {
@@ -160,7 +167,7 @@ small {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: clamp(1.5em, 4vw, 1.8em); /* Ukuran font responsif */
+    font-size: clamp(1.5em, 4vw, 1.8em);
     padding: 5px;
     transition: color 0.3s ease, transform 0.2s ease;
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
@@ -183,7 +190,7 @@ small {
 }
 
 .support-count-header {
-    font-size: clamp(0.9rem, 2vw, 1.05em); /* Ukuran font responsif */
+    font-size: clamp(0.9rem, 2vw, 1.05em);
     font-weight: 600;
     color: #333;
     display: flex;
@@ -204,30 +211,35 @@ small {
 
 /* MEDIA QUERIES FOR SMALL SCREENS */
 @media (max-width: 700px) {
-    html, body, #app {
-        padding: 10px; /* Kurangi padding di layar sangat kecil */
-        /* align-items: flex-start; */ /* Tidak perlu diubah, biarkan center untuk konsistensi */
+    /* Padding pada #app sudah mencukupi, tidak perlu padding pada html/body di sini */
+    html, body {
+        padding: 0; /* Hapus padding di layar sangat kecil pada html/body */
     }
+
+    #app {
+        padding: 10px; /* Sedikit padding untuk #app di layar kecil */
+    }
+    
     .app {
-        margin-top: 0; /* Hapus margin atas di layar kecil */
-        padding: 1.5em; /* Kurangi padding internal di layar kecil */
-        box-shadow: none; /* Hapus shadow di layar sangat kecil agar terlihat lebih native */
-        border-radius: 0; /* Hapus border-radius di layar sangat kecil */
-        max-width: 100%; /* Maksimalkan lebar di layar kecil */
-        margin-bottom: 15px; /* Kurangi jarak bawah app */
+        margin-top: 0;
+        padding: 1.5em;
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+        /* margin-bottom dihapus */
     }
     .header {
-        flex-direction: column; /* Tumpuk item header di layar kecil */
-        align-items: flex-start; /* Rata kiri item header */
+        flex-direction: column;
+        align-items: flex-start;
     }
     .controls {
-        width: 100%; /* Kontrol memenuhi lebar */
-        justify-content: flex-start; /* Rata kiri kontrol */
+        width: 100%;
+        justify-content: flex-start;
     }
     /* Penyesuaian footer untuk layar kecil */
     .main-footer {
-        margin-top: 15px; /* Kurangi jarak di layar kecil */
+        /* margin-top dihapus */
         padding: 5px;
-        max-width: 100%; /* Penuh lebar di layar kecil */
+        max-width: 100%;
     }
     }
