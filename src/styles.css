@@ -8,30 +8,46 @@ html,
 body,
 #app {
     background: #f0f0f2;
-    height: 100%;
+    /* height: 100%; */ /* Ini bisa dihapus jika Anda ingin body bisa scroll */
+    min-height: 100vh; /* Pastikan body minimal setinggi viewport */
     margin: 0;
     padding: 0;
-    font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial
+    font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+    display: flex; /* Tambahkan flexbox untuk memusatkan .app */
+    justify-content: center; /* Pusatkan horizontal */
+    align-items: flex-start; /* Pusatkan di bagian atas, atau 'center' jika Anda ingin di tengah vertikal */
+    padding: 20px; /* Beri sedikit padding agar tidak menempel di tepi layar kecil */
 }
 
+/* Modifikasi pada kelas .app */
 .app {
     background: #fdfdff;
-    width: 600px;
-    margin: 5em auto;
-    padding: 2em
+    width: 100%; /* Default 100% lebar */
+    max-width: 600px; /* Batasi lebar maksimum menjadi 600px */
+    /* margin: 5em auto; */ /* Hapus ini karena sudah diatur oleh flexbox pada body */
+    padding: 2em;
+    border-radius: 10px; /* Tambahkan border-radius agar terlihat seperti card */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tambahkan shadow untuk efek card */
 }
 
 .header {
     display: flex;
     gap: 12px;
     align-items: center;
-    justify-content: space-between
+    justify-content: space-between;
+    flex-wrap: wrap; /* Izinkan wrap jika item terlalu banyak di layar kecil */
+    margin-bottom: 15px; /* Tambahkan sedikit jarak bawah */
+}
+
+.header h2 {
+    font-size: clamp(1.5rem, 4vw, 2rem); /* Ukuran font responsif untuk judul */
+    margin: 0; /* Hapus margin default h2 */
 }
 
 .controls {
     display: flex;
     gap: 8px;
-    align-items: center
+    align-items: center;
 }
 
 .canvas-wrap {
@@ -43,7 +59,8 @@ body,
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    position: relative
+    position: relative;
+    margin-bottom: 15px; /* Tambahkan sedikit jarak bawah */
 }
 
 .canvas-wrap canvas {
@@ -56,7 +73,8 @@ body,
     border: none;
     background: #111;
     color: #fff;
-    cursor: pointer
+    cursor: pointer;
+    font-size: clamp(0.8rem, 2vw, 1rem); /* Ukuran font responsif untuk tombol */
 }
 
 .input-file {
@@ -66,17 +84,34 @@ body,
 .toolbar {
     display: flex;
     gap: 8px;
-    margin-top: 12px
+    margin-top: 12px;
+    flex-wrap: wrap; /* Izinkan wrap jika item terlalu banyak di layar kecil */
 }
 
 small {
-    color: #666
+    color: #666;
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem); /* Ukuran font responsif untuk teks kecil */
 }
 
 @media (max-width: 700px) {
+    html, body, #app {
+        padding: 10px; /* Kurangi padding di layar sangat kecil */
+        align-items: flex-start; /* Tetap di atas di layar kecil */
+    }
     .app {
-        margin: 0 auto;
-        width: auto;
+        margin-top: 0; /* Hapus margin atas di layar kecil */
+        padding: 1.5em; /* Kurangi padding internal di layar kecil */
+        box-shadow: none; /* Hapus shadow di layar sangat kecil agar terlihat lebih native */
+        border-radius: 0; /* Hapus border-radius di layar sangat kecil */
+        max-width: 100%; /* Maksimalkan lebar di layar kecil */
+    }
+    .header {
+        flex-direction: column; /* Tumpuk item header di layar kecil */
+        align-items: flex-start; /* Rata kiri item header */
+    }
+    .controls {
+        width: 100%; /* Kontrol memenuhi lebar */
+        justify-content: flex-start; /* Rata kiri kontrol */
     }
 }
 
@@ -94,10 +129,11 @@ small {
     border-radius: 10px;
     background-color: rgba(255, 255, 255, 0.8);
     color: #888;
-    font-size: 1.2em;
+    font-size: clamp(1rem, 2vw, 1.2em); /* Ukuran font responsif */
     z-index: 10;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+    text-align: center; /* Pusatkan teks */
 }
 
 .drop-area.hover {
@@ -134,7 +170,7 @@ small {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1.8em;
+    font-size: clamp(1.5em, 4vw, 1.8em); /* Ukuran font responsif */
     padding: 5px;
     transition: color 0.3s ease, transform 0.2s ease;
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
@@ -157,7 +193,7 @@ small {
 }
 
 .support-count-header {
-    font-size: 1.05em;
+    font-size: clamp(0.9rem, 2vw, 1.05em); /* Ukuran font responsif */
     font-weight: 600;
     color: #333;
     display: flex;
