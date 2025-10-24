@@ -6,7 +6,7 @@
                 <input ref="fileInput" type="file" accept="image/*" @change="onFile" style="display: none" />
                 
                 <div class="support-count-header">
-                    <i class="fas fa-user-friends"></i> 
+                    <i class="fas fa-heart"></i>
                     
                     <span v-if="isLoading">Memuat...</span>
                     <span v-else class="count-number">
