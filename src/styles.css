@@ -1,39 +1,38 @@
 /* Import Font Awesome */
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
 
-/* Animasi Fade In Global */
+/* Animasi Fade In & Fade Out */
 @keyframes fadeInSmooth {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOutSmooth {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
 }
 
 /* Reset dan Box Sizing */
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 /* Efek lembut saat halaman dimuat */
-html,
-body,
-#app {
+html, body, #app {
   background: #f0f0f2;
-  min-height: 100%;
+  min-height: 100vh;
   margin: 0;
-  padding: 0;
+  padding: 20px;
+  width: 100%;
   font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 20px;
-  width: 100%;
   opacity: 0;
-  animation: fadeInSmooth 0.7s ease forwards; /* Fade lembut saat muat ulang */
+  animation: fadeInSmooth 0.8s ease forwards;
+}
+
+/* Efek fade-out saat keluar / reload */
+body.fade-out, #app.fade-out {
+  animation: fadeOutSmooth 0.6s ease forwards;
 }
 
 /* Konten Aplikasi */
@@ -43,12 +42,13 @@ body,
   max-width: 600px;
   padding: 2em;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   opacity: 0;
   animation: fadeInSmooth 0.9s ease forwards;
-  animation-delay: 0.15s; /* Sedikit delay biar muncul lebih lembut */
+  animation-delay: 0.15s;
 }
 
+/* Header */
 .header {
   display: flex;
   gap: 12px;
@@ -60,12 +60,12 @@ body,
   animation: fadeInSmooth 0.8s ease forwards;
   animation-delay: 0.25s;
 }
-
 .header h2 {
   font-size: clamp(1.5rem, 4vw, 2rem);
   margin: 0;
 }
 
+/* Kontrol & Toolbar */
 .controls {
   display: flex;
   gap: 8px;
@@ -74,7 +74,17 @@ body,
   animation: fadeInSmooth 0.9s ease forwards;
   animation-delay: 0.35s;
 }
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeInSmooth 0.8s ease forwards;
+  animation-delay: 0.5s;
+}
 
+/* Area Canvas */
 .canvas-wrap {
   width: 100%;
   aspect-ratio: 1/1;
@@ -91,13 +101,19 @@ body,
   animation-delay: 0.4s;
 }
 
+/* Efek lembut pada gambar di canvas */
 .canvas-wrap canvas {
   touch-action: none;
   max-width: 100%;
   max-height: 100%;
-  transition: opacity 0.4s ease;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.canvas-wrap canvas.loaded {
+  opacity: 1;
 }
 
+/* Tombol */
 .btn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -108,70 +124,21 @@ body,
   font-size: clamp(0.8rem, 2vw, 1rem);
   transition: background 0.2s, transform 0.2s, opacity 0.2s;
 }
+.btn:hover { background: #333; transform: translateY(-1px); }
+.input-file { display: none; }
 
-.btn:hover {
-  background: #333;
-  transform: translateY(-1px);
-}
-
-.input-file {
-  display: none;
-}
-
-.toolbar {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: fadeInSmooth 0.8s ease forwards;
-  animation-delay: 0.5s;
-}
-
-small {
-  color: #666;
-  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
-}
-
-/* Media Query untuk Mobile */
-@media (max-width: 700px) {
-  html,
-  body,
-  #app {
-    padding: 10px;
-    align-items: flex-start;
-  }
-  .app {
-    margin-top: 0;
-    padding: 1.5em;
-    box-shadow: none;
-    border-radius: 0;
-    max-width: 100%;
-  }
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .controls {
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
-
-/* Area Drop dan Tombol */
+/* Drop Area */
 .drop-area {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border: 2px dashed #ccc;
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255,255,255,0.8);
   color: #888;
   font-size: clamp(1rem, 2vw, 1.2em);
   z-index: 10;
@@ -182,36 +149,22 @@ small {
   animation: fadeInSmooth 1.2s ease forwards;
   animation-delay: 0.6s;
 }
-
 .drop-area.hover {
   border-color: #111;
   color: #111;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255,255,255,0.95);
 }
-
-.drop-area.hidden {
-  display: none;
-}
-
-.drop-area .btn {
-  margin-top: 15px;
-}
-
-.drop-area-text {
-  margin-bottom: 10px;
-}
+.drop-area.hidden { display: none; }
+.drop-area .btn { margin-top: 15px; }
+.drop-area-text { margin-bottom: 10px; }
 
 /* Tombol Mengambang */
 .download-share-btn {
   position: absolute;
-  bottom: 15px;
-  right: 15px;
+  bottom: 15px; right: 15px;
   z-index: 20;
   background: none;
   border: none;
-  width: auto;
-  height: auto;
-  box-shadow: none;
   color: white;
   display: flex;
   align-items: center;
@@ -220,24 +173,13 @@ small {
   font-size: clamp(1.5em, 4vw, 1.8em);
   padding: 5px;
   transition: color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 0 5px rgba(0,0,0,0.8);
   opacity: 0;
   animation: fadeInSmooth 1.3s ease forwards;
   animation-delay: 0.7s;
 }
-
-.download-share-btn:hover:not(:disabled) {
-  transform: scale(1.1);
-}
-
-.download-share-btn:active:not(:disabled) {
-  transform: scale(1);
-}
-
-.download-share-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+.download-share-btn:hover:not(:disabled) { transform: scale(1.1); }
+.download-share-btn:disabled { cursor: not-allowed; opacity: 0.5; }
 
 /* Jumlah Dukungan */
 .support-count-header {
@@ -247,18 +189,19 @@ small {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 0;
-  background-color: transparent;
   opacity: 0;
   animation: fadeInSmooth 1s ease forwards;
   animation-delay: 0.3s;
 }
-
-.support-count-header i {
-  color: #007bff;
+.support-count-header i { color: #007bff; }
+.support-count-header .count-number {
+  font-weight: 700; color: #111;
 }
 
-.support-count-header .count-number {
-  font-weight: 700;
-  color: #111;
+/* Responsif */
+@media (max-width: 700px) {
+  html, body, #app { padding: 10px; align-items: flex-start; }
+  .app { margin-top: 0; padding: 1.5em; box-shadow: none; border-radius: 0; max-width: 100%; }
+  .header { flex-direction: column; align-items: flex-start; }
+  .controls { width: 100%; justify-content: flex-start; }
 }
