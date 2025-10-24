@@ -46,6 +46,16 @@
             </small>
         </div>
     </div>
+    
+    <!-- FAB Theme Toggle -->
+    <button 
+        class="theme-toggle-fab" 
+        @click="toggleDarkMode" 
+        :aria-label="isDarkMode ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'"
+    >
+        <!-- Ikon berubah: Sun untuk mode gelap, Moon untuk mode terang -->
+        <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
+    </button>
 </template>
 
 <script>
@@ -54,6 +64,7 @@
         onMounted
     } from "vue";
     
+    // Asumsikan path ini benar di proyek Anda
     import { supabase } from './lib/supabaseClient'; 
 
     export default {
@@ -72,6 +83,9 @@
             const downloadCompleted = ref(false);
             const isCanvasLocked = ref(false);
             const isLoading = ref(true); 
+            
+            // Logika Dark Mode
+            const isDarkMode = ref(false); 
 
             const offsetX = ref(0);
             const offsetY = ref(0);
@@ -87,9 +101,30 @@
             const supportCount = ref(0); 
             
             // ------------------------------------
-            // FUNGSI SUPABASE
+            // FUNGSI THEME TOGGLE
             // ------------------------------------
 
+            function applyTheme(isDark) {
+                // Terapkan class dark-mode ke elemen <html> untuk cakupan global
+                if (isDark) {
+                    document.documentElement.classList.add('dark-mode');
+                } else {
+                    document.documentElement.classList.remove('dark-mode');
+                }
+            }
+
+            function toggleDarkMode() {
+                isDarkMode.value = !isDarkMode.value;
+                applyTheme(isDarkMode.value);
+                // Simpan preferensi tema
+                localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light');
+            }
+            
+            // ------------------------------------
+            // FUNGSI SUPABASE
+            // ------------------------------------
+            
+            // ... (Semua fungsi Supabase tetap sama) ...
             async function fetchSupportCount() {
               try {
                 const { data, error } = await supabase
@@ -169,7 +204,8 @@
             // ------------------------------------
             // FUNGSI UTAMA TWIBBON & CANVAS (Tetap Sama)
             // ------------------------------------
-
+            
+            // ... (Semua fungsi twibbon dan canvas tetap sama) ...
             function resizeCanvas() {
                 const wrap = canvas.value.parentElement;
                 const size = Math.min(wrap.clientWidth, window.innerHeight * 0.7);
@@ -395,9 +431,10 @@
             }
 
             // ------------------------------------
-            // FUNGSI GESTURE DAN ZOOM (Tetap Sama)
+            // FUNGSI GESTURE DAN ZOOM 
             // ------------------------------------
-
+            
+            // ... (Semua fungsi gesture tetap sama) ...
             function onPointerDown(e) {
                 if (!imageLoaded.value || isCanvasLocked.value) return; 
 
@@ -456,6 +493,20 @@
             // ------------------------------------
 
             onMounted(() => {
+                // START: Logika Memuat Tema Awal
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                if (savedTheme) {
+                    isDarkMode.value = savedTheme === 'dark';
+                } else if (prefersDark) {
+                    isDarkMode.value = true; // Gunakan preferensi sistem jika belum ada yang disimpan
+                }
+
+                // Terapkan tema awal
+                applyTheme(isDarkMode.value);
+                // END: Logika Memuat Tema Awal
+
                 // 1. Ambil hitungan awal
                 fetchSupportCount(); 
                 
@@ -510,6 +561,9 @@
                 // Data Supabase
                 supportCount,
                 isLoading, 
+                // Data Theme Toggle
+                isDarkMode,
+                toggleDarkMode,
             };
         },
     };
